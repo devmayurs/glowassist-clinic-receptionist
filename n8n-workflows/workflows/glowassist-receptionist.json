@@ -1,0 +1,691 @@
+{
+  "name": "GlowAssist AI — Med Spa Receptionist Agent",
+  "nodes": [
+
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "vapi-medspa-call-ended",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "node-webhook-call",
+      "name": "📞 Vapi — Call Ended Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [180, 300],
+      "notes": "Receives Vapi webhook when a call ends. Payload includes transcript, summary, caller phone, duration."
+    },
+
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\n\nconst transcript = body.transcript || body.call?.transcript || '';\nconst summary = body.summary || body.call?.summary || '';\nconst callerPhone = body.customer?.number || body.call?.customer?.number || 'Unknown';\nconst callId = body.call?.id || body.id || 'N/A';\nconst durationSecs = body.call?.endedAt && body.call?.startedAt\n  ? Math.round((new Date(body.call.endedAt) - new Date(body.call.startedAt)) / 1000) : 0;\nconst duration = `${Math.floor(durationSecs/60)}m ${durationSecs%60}s`;\n\n// Extract client name\nlet clientName = 'Unknown Client';\nconst nameMatch = transcript.match(/(?:my name is|I am|I'm|this is)\\s+([A-Z][a-z]+(?:\\s+[A-Z][a-z]+)?)/i);\nif (nameMatch) clientName = nameMatch[1];\n\n// Med Spa services detection\nconst medspaServices = [\n  { key: 'botox', label: 'Botox', price: 350, duration: 30 },\n  { key: 'filler', label: 'Dermal Filler', price: 750, duration: 45 },\n  { key: 'lip filler', label: 'Lip Filler', price: 480, duration: 45 },\n  { key: 'hydrafacial', label: 'HydraFacial', price: 280, duration: 60 },\n  { key: 'facial', label: 'HydraFacial', price: 280, duration: 60 },\n  { key: 'chemical peel', label: 'VI Chemical Peel', price: 350, duration: 45 },\n  { key: 'peel', label: 'VI Chemical Peel', price: 350, duration: 45 },\n  { key: 'laser resurfacing', label: 'Laser Resurfacing', price: 650, duration: 60 },\n  { key: 'laser hair', label: 'Laser Hair Removal', price: 300, duration: 60 },\n  { key: 'microneedling', label: 'Microneedling', price: 380, duration: 60 },\n  { key: 'prp', label: 'Microneedling + PRP', price: 580, duration: 75 },\n  { key: 'rf', label: 'RF Skin Tightening', price: 420, duration: 60 },\n  { key: 'consultation', label: 'Consultation', price: 0, duration: 30 },\n  { key: 'membership', label: 'Membership Inquiry', price: 0, duration: 30 },\n];\n\nlet serviceType = 'General Inquiry';\nlet servicePrice = 0;\nlet serviceDuration = 30;\nconst fullText = (transcript + ' ' + summary).toLowerCase();\nfor (const svc of medspaServices) {\n  if (fullText.includes(svc.key)) {\n    serviceType = svc.label;\n    servicePrice = svc.price;\n    serviceDuration = svc.duration;\n    break;\n  }\n}\n\n// Provider detection\nlet provider = 'To Be Assigned';\nif (['Botox','Dermal Filler','Lip Filler'].includes(serviceType)) provider = 'Dr. Reeves';\nelse if (['Laser Resurfacing','Laser Hair Removal','RF Skin Tightening'].includes(serviceType)) provider = 'Dr. Chen';\nelse if (['HydraFacial','VI Chemical Peel','Microneedling'].includes(serviceType)) provider = 'Esthetician Maya';\n\n// Package detection\nconst packageKeywords = ['membership', 'package', 'bundle', 'radiance', 'botox club', 'glow bundle'];\nconst packageInterest = packageKeywords.some(k => fullText.includes(k));\n\n// VIP detection (returning client language)\nconst vipKeywords = ['last time', 'usually', 'my regular', 'always come', 'been before', 'returning'];\nconst likelyVip = vipKeywords.some(k => fullText.includes(k));\n\n// Booking confirmed\nconst appointmentBooked = /(confirmed|booked|scheduled|appointment is set|see you)/i.test(transcript + summary);\nconst isNewClient = /(new patient|new client|first time|never been|first visit)/i.test(transcript + summary);\n\n// Date/time\nlet appointmentDate = '';\nlet appointmentTime = '';\nconst dateMatch = transcript.match(/(monday|tuesday|wednesday|thursday|friday|saturday|sunday|today|tomorrow|\\d{1,2}[\\/\\-]\\d{1,2})/i);\nconst timeMatch = transcript.match(/(\\d{1,2}(?::\\d{2})?\\s*(?:AM|PM|am|pm))/i);\nif (dateMatch) appointmentDate = dateMatch[1];\nif (timeMatch) appointmentTime = timeMatch[1];\n\nreturn [{\n  json: {\n    callId, callerPhone, clientName, duration,\n    transcript, summary: summary || 'No summary available',\n    serviceType, servicePrice, serviceDuration, provider,\n    packageInterest, likelyVip, appointmentBooked,\n    isNewClient, appointmentDate, appointmentTime,\n    callTimestamp: new Date().toISOString(),\n    callDate: new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' }),\n    callTime: new Date().toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' })\n  }\n}];"
+      },
+      "id": "node-parse-call",
+      "name": "🧠 Parse Call & Extract Med Spa Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 300],
+      "notes": "Extracts: client name, service type (Botox/Filler/Facial/Laser etc), price, provider, package interest, VIP status, booking confirmation."
+    },
+
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "record",
+        "operation": "search",
+        "base": { "__rl": true, "value": "YOUR_AIRTABLE_BASE_ID", "mode": "id" },
+        "table": { "__rl": true, "value": "Clients", "mode": "name" },
+        "filterByFormula": "={Phone}='{{$json.callerPhone}}'",
+        "options": { "fields": ["Client Name","Phone","Email","Membership","Visit Count","Total Spent","Preferred Provider","Skin Concerns","Allergies"] }
+      },
+      "id": "node-search-client",
+      "name": "🔍 Search Client in Airtable",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [660, 300],
+      "notes": "Looks up client by phone number to find if returning or new."
+    },
+
+    {
+      "parameters": {
+        "conditions": {
+          "number": [{ "value1": "={{$json.length}}", "operation": "larger", "value2": 0 }]
+        }
+      },
+      "id": "node-client-exists",
+      "name": "👤 Client Exists?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [900, 300],
+      "notes": "Routes to update (returning) or create (new) client record."
+    },
+
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "record",
+        "operation": "update",
+        "base": { "__rl": true, "value": "YOUR_AIRTABLE_BASE_ID", "mode": "id" },
+        "table": { "__rl": true, "value": "Clients", "mode": "name" },
+        "id": "={{$json[0].id}}",
+        "fields": {
+          "fieldValues": [
+            { "fieldName": "Last Call Date", "fieldValue": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.callTimestamp}}" },
+            { "fieldName": "Last Service", "fieldValue": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.serviceType}}" },
+            { "fieldName": "Visit Count", "fieldValue": "={{($json[0].fields['Visit Count'] || 0) + 1}}" },
+            { "fieldName": "Total Spent", "fieldValue": "={{($json[0].fields['Total Spent'] || 0) + $node['🧠 Parse Call & Extract Med Spa Data'].json.servicePrice}}" }
+          ]
+        }
+      },
+      "id": "node-update-client",
+      "name": "✏️ Update Returning Client",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [1140, 200],
+      "notes": "Updates returning client: last call, last service, visit count ++, total spend accumulated."
+    },
+
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "record",
+        "operation": "create",
+        "base": { "__rl": true, "value": "YOUR_AIRTABLE_BASE_ID", "mode": "id" },
+        "table": { "__rl": true, "value": "Clients", "mode": "name" },
+        "fields": {
+          "fieldValues": [
+            { "fieldName": "Client Name", "fieldValue": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.clientName}}" },
+            { "fieldName": "Phone", "fieldValue": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.callerPhone}}" },
+            { "fieldName": "Source", "fieldValue": "AI Phone Call" },
+            { "fieldName": "First Visit Date", "fieldValue": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.callTimestamp}}" },
+            { "fieldName": "Last Service", "fieldValue": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.serviceType}}" },
+            { "fieldName": "Visit Count", "fieldValue": 1 },
+            { "fieldName": "Total Spent", "fieldValue": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.servicePrice}}" },
+            { "fieldName": "Client Status", "fieldValue": "New" },
+            { "fieldName": "Package Interest", "fieldValue": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.packageInterest}}" }
+          ]
+        }
+      },
+      "id": "node-create-client",
+      "name": "➕ Create New Client",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [1140, 400],
+      "notes": "Creates new client profile with all available data from the call."
+    },
+
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "record",
+        "operation": "create",
+        "base": { "__rl": true, "value": "YOUR_AIRTABLE_BASE_ID", "mode": "id" },
+        "table": { "__rl": true, "value": "Call Logs", "mode": "name" },
+        "fields": {
+          "fieldValues": [
+            { "fieldName": "Client Name", "fieldValue": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.clientName}}" },
+            { "fieldName": "Phone", "fieldValue": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.callerPhone}}" },
+            { "fieldName": "Call Date", "fieldValue": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.callDate}}" },
+            { "fieldName": "Call Time", "fieldValue": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.callTime}}" },
+            { "fieldName": "Duration", "fieldValue": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.duration}}" },
+            { "fieldName": "Call Summary", "fieldValue": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.summary}}" },
+            { "fieldName": "Full Transcript", "fieldValue": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.transcript}}" },
+            { "fieldName": "Service Requested", "fieldValue": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.serviceType}}" },
+            { "fieldName": "Estimated Value", "fieldValue": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.servicePrice}}" },
+            { "fieldName": "Package Interest", "fieldValue": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.packageInterest}}" },
+            { "fieldName": "Appointment Booked", "fieldValue": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.appointmentBooked}}" },
+            { "fieldName": "Is New Client", "fieldValue": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.isNewClient}}" },
+            { "fieldName": "Call ID", "fieldValue": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.callId}}" }
+          ]
+        }
+      },
+      "id": "node-save-call-log",
+      "name": "💾 Save Call Log",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [1380, 300],
+      "notes": "Saves full call transcript, summary, service, estimated value, and package interest to Call Logs table."
+    },
+
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [{ "value1": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.appointmentBooked}}", "value2": true }]
+        }
+      },
+      "id": "node-appt-check",
+      "name": "📅 Appointment Booked?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1620, 300]
+    },
+
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "calendarId": "YOUR_GOOGLE_CALENDAR_ID",
+        "summary": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.serviceType}} — {{$node['🧠 Parse Call & Extract Med Spa Data'].json.clientName}}",
+        "start": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.appointmentDate + ' ' + $node['🧠 Parse Call & Extract Med Spa Data'].json.appointmentTime}}",
+        "end": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.appointmentDate + ' ' + $node['🧠 Parse Call & Extract Med Spa Data'].json.appointmentTime}}",
+        "additionalFields": {
+          "description": "Client: {{$node['🧠 Parse Call & Extract Med Spa Data'].json.clientName}}\nPhone: {{$node['🧠 Parse Call & Extract Med Spa Data'].json.callerPhone}}\nService: {{$node['🧠 Parse Call & Extract Med Spa Data'].json.serviceType}}\nProvider: {{$node['🧠 Parse Call & Extract Med Spa Data'].json.provider}}\nEst. Value: ${{$node['🧠 Parse Call & Extract Med Spa Data'].json.servicePrice}}\nDuration: {{$node['🧠 Parse Call & Extract Med Spa Data'].json.serviceDuration}} mins\nBooked by: GlowAssist AI\n\nCall Summary:\n{{$node['🧠 Parse Call & Extract Med Spa Data'].json.summary}}",
+          "location": "Lumière Med Spa, 45 Blossom Avenue Suite 200",
+          "colorId": "4"
+        }
+      },
+      "id": "node-calendar",
+      "name": "📆 Add to Google Calendar",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1,
+      "position": [1860, 200]
+    },
+
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "record",
+        "operation": "create",
+        "base": { "__rl": true, "value": "YOUR_AIRTABLE_BASE_ID", "mode": "id" },
+        "table": { "__rl": true, "value": "Appointments", "mode": "name" },
+        "fields": {
+          "fieldValues": [
+            { "fieldName": "Client Name", "fieldValue": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.clientName}}" },
+            { "fieldName": "Phone", "fieldValue": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.callerPhone}}" },
+            { "fieldName": "Appointment Date", "fieldValue": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.appointmentDate}}" },
+            { "fieldName": "Appointment Time", "fieldValue": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.appointmentTime}}" },
+            { "fieldName": "Treatment", "fieldValue": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.serviceType}}" },
+            { "fieldName": "Provider", "fieldValue": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.provider}}" },
+            { "fieldName": "Duration (mins)", "fieldValue": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.serviceDuration}}" },
+            { "fieldName": "Estimated Price", "fieldValue": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.servicePrice}}" },
+            { "fieldName": "Status", "fieldValue": "Confirmed" },
+            { "fieldName": "Booked By", "fieldValue": "AI Agent" },
+            { "fieldName": "Package Used", "fieldValue": false },
+            { "fieldName": "Call ID", "fieldValue": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.callId}}" }
+          ]
+        }
+      },
+      "id": "node-save-appt",
+      "name": "📋 Save Appointment",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [1860, 380]
+    },
+
+    {
+      "parameters": {
+        "accountSid": "YOUR_TWILIO_ACCOUNT_SID",
+        "authToken": "YOUR_TWILIO_AUTH_TOKEN",
+        "from": "YOUR_TWILIO_PHONE_NUMBER",
+        "to": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.callerPhone}}",
+        "message": "✨ Hello {{$node['🧠 Parse Call & Extract Med Spa Data'].json.clientName}}!\n\nYour appointment at Lumière Med Spa is confirmed:\n\n💆 Treatment: {{$node['🧠 Parse Call & Extract Med Spa Data'].json.serviceType}}\n👩‍⚕️ Provider: {{$node['🧠 Parse Call & Extract Med Spa Data'].json.provider}}\n📅 Date: {{$node['🧠 Parse Call & Extract Med Spa Data'].json.appointmentDate}}\n🕐 Time: {{$node['🧠 Parse Call & Extract Med Spa Data'].json.appointmentTime}}\n📍 45 Blossom Avenue, Suite 200\n\nPlease arrive 10 mins early. Avoid retinol 3 days before facial treatments.\n\nReply CANCEL or RESCHEDULE if needed.\n— Lumière Med Spa 🌸"
+      },
+      "id": "node-sms-confirm",
+      "name": "📱 SMS Booking Confirmation",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [2100, 300],
+      "notes": "Sends luxurious branded SMS confirmation with prep instructions specific to treatment type."
+    },
+
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [{ "value1": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.packageInterest}}", "value2": true }]
+        }
+      },
+      "id": "node-pkg-interest",
+      "name": "🎁 Package Interest?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [2340, 300],
+      "notes": "If client expressed interest in memberships or packages, send dedicated follow-up."
+    },
+
+    {
+      "parameters": {
+        "accountSid": "YOUR_TWILIO_ACCOUNT_SID",
+        "authToken": "YOUR_TWILIO_AUTH_TOKEN",
+        "from": "YOUR_TWILIO_PHONE_NUMBER",
+        "to": "={{$node['🧠 Parse Call & Extract Med Spa Data'].json.callerPhone}}",
+        "message": "🌸 Hi {{$node['🧠 Parse Call & Extract Med Spa Data'].json.clientName}}!\n\nThank you for your interest in our memberships. Here's a quick summary:\n\n✦ Radiance Membership — $299/mo\n  1 HydraFacial + 20% off all treatments\n\n💉 Botox Club — $199/mo\n  Up to 40 units monthly\n\n🌿 Glow Bundle (6 Peels) — $1,499\n  Save $601 on VI Chemical Peels\n\nReply MEMBER and we'll set you up on your next visit!\n— Lumière Med Spa 🌸"
+      },
+      "id": "node-pkg-sms",
+      "name": "🎁 Send Package Info SMS",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [2580, 200],
+      "notes": "Sends membership/package details to any client who expressed interest during the call."
+    },
+
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 10 * * *" }] }
+      },
+      "id": "node-reminder-trigger",
+      "name": "⏰ Daily 10AM Reminder Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [180, 600],
+      "notes": "Runs every morning at 10AM to send appointment reminders for next day."
+    },
+
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "record",
+        "operation": "search",
+        "base": { "__rl": true, "value": "YOUR_AIRTABLE_BASE_ID", "mode": "id" },
+        "table": { "__rl": true, "value": "Appointments", "mode": "name" },
+        "filterByFormula": "=AND({Appointment Date}=DATEADD(TODAY(), 1, 'days'), {Status}='Confirmed', {Reminder Sent}=FALSE())",
+        "options": { "fields": ["Client Name","Phone","Appointment Date","Appointment Time","Treatment","Provider","Estimated Price"] }
+      },
+      "id": "node-get-tomorrows",
+      "name": "📋 Get Tomorrow's Bookings",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [420, 600]
+    },
+
+    {
+      "parameters": { "batchSize": 1, "options": {} },
+      "id": "node-split",
+      "name": "🔄 Loop Each Appointment",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [660, 600]
+    },
+
+    {
+      "parameters": {
+        "jsCode": "const treatment = $input.first().json.fields['Treatment'] || '';\nconst lowerTreatment = treatment.toLowerCase();\n\nlet prepInstructions = '';\nif (lowerTreatment.includes('botox') || lowerTreatment.includes('filler') || lowerTreatment.includes('lip')) {\n  prepInstructions = 'Please avoid alcohol and blood thinners (aspirin, ibuprofen) for 24 hours before. No vigorous exercise day of.';\n} else if (lowerTreatment.includes('laser') || lowerTreatment.includes('resurfacing')) {\n  prepInstructions = 'Avoid sun exposure and retinol for 1 week before. Arrive with clean, makeup-free skin.';\n} else if (lowerTreatment.includes('peel') || lowerTreatment.includes('chemical')) {\n  prepInstructions = 'Discontinue retinol 5 days before. Avoid waxing the treatment area for 2 weeks.';\n} else if (lowerTreatment.includes('microneedling')) {\n  prepInstructions = 'Avoid retinol and exfoliants for 5 days before. Come with clean skin, no makeup.';\n} else {\n  prepInstructions = 'Arrive 10 minutes early. Come with a clean, makeup-free face for best results.';\n}\n\nreturn [{ json: { ...($input.first().json), prepInstructions } }];"
+      },
+      "id": "node-prep-instructions",
+      "name": "💡 Get Treatment Prep Instructions",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 600],
+      "notes": "Generates treatment-specific prep instructions (different for Botox, Laser, Peels, Microneedling etc.)"
+    },
+
+    {
+      "parameters": {
+        "accountSid": "YOUR_TWILIO_ACCOUNT_SID",
+        "authToken": "YOUR_TWILIO_AUTH_TOKEN",
+        "from": "YOUR_TWILIO_PHONE_NUMBER",
+        "to": "={{$json.fields.Phone}}",
+        "message": "✨ Hello {{$json.fields['Client Name']}}!\n\nA gentle reminder from Lumière Med Spa 🌸\n\nYou have an appointment TOMORROW:\n💆 {{$json.fields['Treatment']}}\n👩‍⚕️ {{$json.fields['Provider']}}\n🕐 {{$json.fields['Appointment Time']}}\n📍 45 Blossom Avenue, Suite 200\n\n📋 Preparation: {{$json.prepInstructions}}\n\nReply:\n✅ YES — confirm\n❌ CANCEL — cancel\n🔄 RESCHEDULE — change time\n\nWe look forward to seeing you! 🌸"
+      },
+      "id": "node-reminder-sms",
+      "name": "📱 Send Reminder + Prep SMS",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [1140, 600],
+      "notes": "Sends personalised reminder with treatment-specific prep instructions — adds real value beyond a basic reminder."
+    },
+
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "record",
+        "operation": "update",
+        "base": { "__rl": true, "value": "YOUR_AIRTABLE_BASE_ID", "mode": "id" },
+        "table": { "__rl": true, "value": "Appointments", "mode": "name" },
+        "id": "={{$json.id}}",
+        "fields": {
+          "fieldValues": [
+            { "fieldName": "Reminder Sent", "fieldValue": true },
+            { "fieldName": "Reminder Sent At", "fieldValue": "={{new Date().toISOString()}}" }
+          ]
+        }
+      },
+      "id": "node-mark-reminder",
+      "name": "✅ Mark Reminder Sent",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [1380, 600]
+    },
+
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "medspa-sms-reply",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "node-sms-webhook",
+      "name": "💬 SMS Reply Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [180, 840]
+    },
+
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst from = body.From || '';\nconst msg = (body.Body || '').trim().toUpperCase();\n\nlet action = 'UNKNOWN';\nif (['YES','CONFIRM','Y','1'].includes(msg)) action = 'CONFIRM';\nelse if (['CANCEL','NO','N','2'].includes(msg)) action = 'CANCEL';\nelse if (['RESCHEDULE','CHANGE','R','3'].includes(msg)) action = 'RESCHEDULE';\nelse if (msg === 'MEMBER') action = 'MEMBERSHIP';\n\nreturn [{ json: { phone: from, reply: msg, action } }];"
+      },
+      "id": "node-parse-reply",
+      "name": "🔍 Parse SMS Reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 840]
+    },
+
+    {
+      "parameters": {
+        "rules": {
+          "rules": [
+            { "outputKey": "confirm", "conditions": { "string": [{ "value1": "={{$json.action}}", "operation": "equals", "value2": "CONFIRM" }] } },
+            { "outputKey": "cancel", "conditions": { "string": [{ "value1": "={{$json.action}}", "operation": "equals", "value2": "CANCEL" }] } },
+            { "outputKey": "reschedule", "conditions": { "string": [{ "value1": "={{$json.action}}", "operation": "equals", "value2": "RESCHEDULE" }] } },
+            { "outputKey": "membership", "conditions": { "string": [{ "value1": "={{$json.action}}", "operation": "equals", "value2": "MEMBERSHIP" }] } }
+          ]
+        }
+      },
+      "id": "node-reply-router",
+      "name": "🔀 Route SMS Reply",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 2,
+      "position": [660, 840]
+    },
+
+    {
+      "parameters": {
+        "accountSid": "YOUR_TWILIO_ACCOUNT_SID",
+        "authToken": "YOUR_TWILIO_AUTH_TOKEN",
+        "from": "YOUR_TWILIO_PHONE_NUMBER",
+        "to": "={{$json.phone}}",
+        "message": "✅ Wonderful! Your appointment is confirmed. We're so excited to welcome you to Lumière 🌸 Please remember your prep instructions and arrive 10 minutes early. See you soon!"
+      },
+      "id": "node-confirm-reply",
+      "name": "✅ Reply Confirmed",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [900, 740]
+    },
+
+    {
+      "parameters": {
+        "accountSid": "YOUR_TWILIO_ACCOUNT_SID",
+        "authToken": "YOUR_TWILIO_AUTH_TOKEN",
+        "from": "YOUR_TWILIO_PHONE_NUMBER",
+        "to": "={{$json.phone}}",
+        "message": "We understand 🌸 Your appointment has been cancelled. Whenever you're ready to rebook, call us or reply RESCHEDULE and Aria will arrange a new time for you. — Lumière Med Spa"
+      },
+      "id": "node-cancel-reply",
+      "name": "❌ Reply Cancelled",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [900, 860]
+    },
+
+    {
+      "parameters": {
+        "accountSid": "YOUR_TWILIO_ACCOUNT_SID",
+        "authToken": "YOUR_TWILIO_AUTH_TOKEN",
+        "from": "YOUR_TWILIO_PHONE_NUMBER",
+        "to": "={{$json.phone}}",
+        "message": "Of course! Our AI concierge Aria will call you back shortly to find a perfect new time ✨ Alternatively call us at (555) 000-5678. — Lumière Med Spa 🌸"
+      },
+      "id": "node-reschedule-reply",
+      "name": "🔄 Reply Reschedule",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [900, 980]
+    },
+
+    {
+      "parameters": {
+        "accountSid": "YOUR_TWILIO_ACCOUNT_SID",
+        "authToken": "YOUR_TWILIO_AUTH_TOKEN",
+        "from": "YOUR_TWILIO_PHONE_NUMBER",
+        "to": "={{$json.phone}}",
+        "message": "How wonderful! 🌸 Our team will reach out within 24 hours to set up your membership and answer any questions. As a member you'll enjoy priority booking, exclusive offers, and beautiful savings. — Lumière Med Spa ✨"
+      },
+      "id": "node-membership-reply",
+      "name": "✦ Reply Membership",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [900, 1100],
+      "notes": "Warm membership interest reply — triggers follow-up from spa team."
+    },
+
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 11 * * *" }] }
+      },
+      "id": "node-feedback-trigger",
+      "name": "⭐ Post-Visit Feedback — 11AM Daily",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [180, 1140]
+    },
+
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "record",
+        "operation": "search",
+        "base": { "__rl": true, "value": "YOUR_AIRTABLE_BASE_ID", "mode": "id" },
+        "table": { "__rl": true, "value": "Appointments", "mode": "name" },
+        "filterByFormula": "=AND({Appointment Date}=DATEADD(TODAY(),-1,'days'),{Status}='Confirmed',{Feedback Sent}=FALSE())",
+        "options": { "fields": ["Client Name","Phone","Treatment","Provider"] }
+      },
+      "id": "node-get-yesterday",
+      "name": "📋 Get Yesterday's Clients",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [420, 1140]
+    },
+
+    {
+      "parameters": {
+        "accountSid": "YOUR_TWILIO_ACCOUNT_SID",
+        "authToken": "YOUR_TWILIO_AUTH_TOKEN",
+        "from": "YOUR_TWILIO_PHONE_NUMBER",
+        "to": "={{$json.fields.Phone}}",
+        "message": "✨ Hello {{$json.fields['Client Name']}}!\n\nThank you for visiting Lumière Med Spa yesterday for your {{$json.fields['Treatment']}} with {{$json.fields['Provider']}} 🌸\n\nWe'd love to hear about your experience:\n⭐ 5 — Exceptional\n⭐ 4 — Excellent\n⭐ 3 — Good\n⭐ 2 — Fair\n⭐ 1 — Needs improvement\n\nSimply reply with your rating. Your feedback means the world to us 💕\n\n— Lumière Med Spa"
+      },
+      "id": "node-feedback-sms",
+      "name": "⭐ Send Feedback SMS",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [660, 1140]
+    },
+
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 8 * * 1" }] }
+      },
+      "id": "node-weekly-trigger",
+      "name": "📊 Weekly Report — Monday 8AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [180, 1340]
+    },
+
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "record",
+        "operation": "search",
+        "base": { "__rl": true, "value": "YOUR_AIRTABLE_BASE_ID", "mode": "id" },
+        "table": { "__rl": true, "value": "Call Logs", "mode": "name" },
+        "filterByFormula": "=IS_AFTER({Call Date}, DATEADD(TODAY(), -7, 'days'))",
+        "options": { "fields": ["Service Requested","Appointment Booked","Is New Client","Package Interest","Estimated Value"] }
+      },
+      "id": "node-get-weekly-logs",
+      "name": "📋 Get Week's Call Logs",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [420, 1340]
+    },
+
+    {
+      "parameters": {
+        "jsCode": "const logs = $input.all().map(i => i.json.fields);\n\nconst totalCalls = logs.length;\nconst apptBooked = logs.filter(l => l['Appointment Booked']).length;\nconst newClients = logs.filter(l => l['Is New Client']).length;\nconst pkgInterest = logs.filter(l => l['Package Interest']).length;\nconst aiBookingRate = totalCalls > 0 ? Math.round((apptBooked / totalCalls) * 100) : 0;\nconst estimatedRevenue = logs.reduce((sum, l) => sum + (parseInt(l['Estimated Value']) || 0), 0);\n\nconst services = {};\nlogs.forEach(l => { const s = l['Service Requested'] || 'Unknown'; services[s] = (services[s] || 0) + 1; });\nconst topServices = Object.entries(services).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([s,c])=>`${s} (${c})`).join(', ');\n\nconst timeSaved = Math.round(totalCalls * 4.5);\nconst reportDate = new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });\n\nconst html = `\n<div style=\"font-family:Georgia,serif;max-width:600px;margin:0 auto;background:#FAF8F5;border:1px solid #E8DDD6;border-radius:12px;overflow:hidden\">\n  <div style=\"background:#1C1410;padding:24px;text-align:center\">\n    <div style=\"color:#D4AF7A;font-size:1.4rem;font-style:italic;margin-bottom:4px\">Lumière Med Spa</div>\n    <div style=\"color:rgba(255,255,255,0.5);font-size:0.75rem;letter-spacing:2px\">WEEKLY AI PERFORMANCE REPORT</div>\n  </div>\n  <div style=\"padding:24px\">\n    <p style=\"color:#8A7268;font-size:0.85rem\">Week ending: <strong>${reportDate}</strong></p>\n    <hr style=\"border:1px solid #E8DDD6;margin:16px 0\">\n    <h3 style=\"color:#1C1410;font-size:1.1rem;margin-bottom:12px\">✦ Call Performance</h3>\n    <table style=\"width:100%;border-collapse:collapse;font-size:0.85rem\">\n      <tr><td style=\"padding:6px 0;color:#8A7268\">Total calls handled by AI</td><td style=\"text-align:right;font-weight:bold;color:#C9847A\">${totalCalls}</td></tr>\n      <tr><td style=\"padding:6px 0;color:#8A7268\">Appointments booked</td><td style=\"text-align:right;font-weight:bold;color:#C9847A\">${apptBooked}</td></tr>\n      <tr><td style=\"padding:6px 0;color:#8A7268\">AI booking rate</td><td style=\"text-align:right;font-weight:bold;color:#C9847A\">${aiBookingRate}%</td></tr>\n      <tr><td style=\"padding:6px 0;color:#8A7268\">New clients acquired</td><td style=\"text-align:right;font-weight:bold;color:#C9847A\">${newClients}</td></tr>\n      <tr><td style=\"padding:6px 0;color:#8A7268\">Package/membership interest</td><td style=\"text-align:right;font-weight:bold;color:#B8965A\">${pkgInterest}</td></tr>\n      <tr><td style=\"padding:6px 0;color:#8A7268\">Estimated revenue generated</td><td style=\"text-align:right;font-weight:bold;color:#B8965A\">$${estimatedRevenue.toLocaleString()}</td></tr>\n      <tr><td style=\"padding:6px 0;color:#8A7268\">Receptionist time saved</td><td style=\"text-align:right;font-weight:bold;color:#7A9E7E\">${timeSaved} minutes</td></tr>\n    </table>\n    <hr style=\"border:1px solid #E8DDD6;margin:16px 0\">\n    <p style=\"font-size:0.82rem;color:#8A7268\"><strong>Top Services:</strong> ${topServices}</p>\n    <p style=\"font-size:0.75rem;color:#B0A098;margin-top:16px;text-align:center\">— GlowAssist AI by Your Company · Powered by Claude AI</p>\n  </div>\n</div>`;\n\nreturn [{ json: { totalCalls, apptBooked, newClients, pkgInterest, aiBookingRate, estimatedRevenue, topServices, timeSaved, html, reportDate } }];"
+      },
+      "id": "node-compile-report",
+      "name": "📊 Compile Weekly Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 1340]
+    },
+
+    {
+      "parameters": {
+        "fromEmail": "ai@glowassist.com",
+        "toEmail": "owner@lumieremedspa.com",
+        "subject": "✨ Weekly AI Report — Lumière Med Spa — {{$json.reportDate}}",
+        "emailType": "html",
+        "message": "={{$json.html}}"
+      },
+      "id": "node-weekly-email",
+      "name": "📧 Email Weekly Report",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [900, 1340]
+    },
+
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 10 1 * *" }] }
+      },
+      "id": "node-reengagement-trigger",
+      "name": "🌸 Monthly Re-engagement — 1st of Month",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [180, 1520],
+      "notes": "Runs on the 1st of each month to re-engage clients who haven't visited in 60+ days."
+    },
+
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "record",
+        "operation": "search",
+        "base": { "__rl": true, "value": "YOUR_AIRTABLE_BASE_ID", "mode": "id" },
+        "table": { "__rl": true, "value": "Clients", "mode": "name" },
+        "filterByFormula": "=AND(IS_BEFORE({Last Call Date}, DATEADD(TODAY(), -60, 'days')), {Client Status}='Active')",
+        "options": { "fields": ["Client Name","Phone","Last Service"] }
+      },
+      "id": "node-get-lapsed",
+      "name": "📋 Get Lapsed Clients (60+ days)",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [420, 1520]
+    },
+
+    {
+      "parameters": {
+        "accountSid": "YOUR_TWILIO_ACCOUNT_SID",
+        "authToken": "YOUR_TWILIO_AUTH_TOKEN",
+        "from": "YOUR_TWILIO_PHONE_NUMBER",
+        "to": "={{$json.fields.Phone}}",
+        "message": "✨ Hello {{$json.fields['Client Name']}}!\n\nWe've been thinking of you at Lumière 🌸 It's been a while since your last visit and we'd love to welcome you back.\n\nAs a special gesture, enjoy 15% off your next {{$json.fields['Last Service']}} treatment this month.\n\nSimply mention this message when booking. Call us or reply BOOK and Aria will arrange everything!\n\n— Lumière Med Spa ✦"
+      },
+      "id": "node-reengagement-sms",
+      "name": "🌸 Send Re-engagement SMS",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [660, 1520],
+      "notes": "Sends personalised re-engagement offer referencing client's last treatment — drives return visits."
+    },
+
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"received\", \"message\": \"Processed by GlowAssist AI\" }"
+      },
+      "id": "node-webhook-response",
+      "name": "✔️ Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2580, 400]
+    }
+
+  ],
+
+  "connections": {
+    "📞 Vapi — Call Ended Webhook": { "main": [[{ "node": "🧠 Parse Call & Extract Med Spa Data", "type": "main", "index": 0 }]] },
+    "🧠 Parse Call & Extract Med Spa Data": { "main": [[{ "node": "🔍 Search Client in Airtable", "type": "main", "index": 0 }]] },
+    "🔍 Search Client in Airtable": { "main": [[{ "node": "👤 Client Exists?", "type": "main", "index": 0 }]] },
+    "👤 Client Exists?": { "main": [
+      [{ "node": "✏️ Update Returning Client", "type": "main", "index": 0 }],
+      [{ "node": "➕ Create New Client", "type": "main", "index": 0 }]
+    ]},
+    "✏️ Update Returning Client": { "main": [[{ "node": "💾 Save Call Log", "type": "main", "index": 0 }]] },
+    "➕ Create New Client": { "main": [[{ "node": "💾 Save Call Log", "type": "main", "index": 0 }]] },
+    "💾 Save Call Log": { "main": [[{ "node": "📅 Appointment Booked?", "type": "main", "index": 0 }]] },
+    "📅 Appointment Booked?": { "main": [
+      [{ "node": "📆 Add to Google Calendar", "type": "main", "index": 0 }, { "node": "📋 Save Appointment", "type": "main", "index": 0 }],
+      []
+    ]},
+    "📆 Add to Google Calendar": { "main": [[{ "node": "📱 SMS Booking Confirmation", "type": "main", "index": 0 }]] },
+    "📋 Save Appointment": { "main": [[{ "node": "📱 SMS Booking Confirmation", "type": "main", "index": 0 }]] },
+    "📱 SMS Booking Confirmation": { "main": [[{ "node": "🎁 Package Interest?", "type": "main", "index": 0 }]] },
+    "🎁 Package Interest?": { "main": [
+      [{ "node": "🎁 Send Package Info SMS", "type": "main", "index": 0 }],
+      [{ "node": "✔️ Webhook Response", "type": "main", "index": 0 }]
+    ]},
+    "🎁 Send Package Info SMS": { "main": [[{ "node": "✔️ Webhook Response", "type": "main", "index": 0 }]] },
+    "⏰ Daily 10AM Reminder Trigger": { "main": [[{ "node": "📋 Get Tomorrow's Bookings", "type": "main", "index": 0 }]] },
+    "📋 Get Tomorrow's Bookings": { "main": [[{ "node": "🔄 Loop Each Appointment", "type": "main", "index": 0 }]] },
+    "🔄 Loop Each Appointment": { "main": [[{ "node": "💡 Get Treatment Prep Instructions", "type": "main", "index": 0 }]] },
+    "💡 Get Treatment Prep Instructions": { "main": [[{ "node": "📱 Send Reminder + Prep SMS", "type": "main", "index": 0 }]] },
+    "📱 Send Reminder + Prep SMS": { "main": [[{ "node": "✅ Mark Reminder Sent", "type": "main", "index": 0 }]] },
+    "💬 SMS Reply Webhook": { "main": [[{ "node": "🔍 Parse SMS Reply", "type": "main", "index": 0 }]] },
+    "🔍 Parse SMS Reply": { "main": [[{ "node": "🔀 Route SMS Reply", "type": "main", "index": 0 }]] },
+    "🔀 Route SMS Reply": { "main": [
+      [{ "node": "✅ Reply Confirmed", "type": "main", "index": 0 }],
+      [{ "node": "❌ Reply Cancelled", "type": "main", "index": 0 }],
+      [{ "node": "🔄 Reply Reschedule", "type": "main", "index": 0 }],
+      [{ "node": "✦ Reply Membership", "type": "main", "index": 0 }]
+    ]},
+    "📊 Weekly Report — Monday 8AM": { "main": [[{ "node": "📋 Get Week's Call Logs", "type": "main", "index": 0 }]] },
+    "📋 Get Week's Call Logs": { "main": [[{ "node": "📊 Compile Weekly Report", "type": "main", "index": 0 }]] },
+    "📊 Compile Weekly Report": { "main": [[{ "node": "📧 Email Weekly Report", "type": "main", "index": 0 }]] },
+    "⭐ Post-Visit Feedback — 11AM Daily": { "main": [[{ "node": "📋 Get Yesterday's Clients", "type": "main", "index": 0 }]] },
+    "📋 Get Yesterday's Clients": { "main": [[{ "node": "⭐ Send Feedback SMS", "type": "main", "index": 0 }]] },
+    "🌸 Monthly Re-engagement — 1st of Month": { "main": [[{ "node": "📋 Get Lapsed Clients (60+ days)", "type": "main", "index": 0 }]] },
+    "📋 Get Lapsed Clients (60+ days)": { "main": [[{ "node": "🌸 Send Re-engagement SMS", "type": "main", "index": 0 }]] }
+  },
+
+  "settings": { "executionOrder": "v1", "saveManualExecutions": true },
+  "tags": ["medspa","glowassist","vapi","airtable","twilio","ai-receptionist"],
+
+  "_readme": {
+    "title": "GlowAssist AI — Med Spa Receptionist Agent",
+    "version": "1.0.0",
+    "workflows_included": [
+      "1. Post-Call Processing — Vapi webhook → Parse call → Client lookup/create → Save log → Book calendar → SMS confirm → Package upsell",
+      "2. Daily Appointment Reminders (10AM) — Treatment-specific prep instructions per service",
+      "3. SMS Reply Handler — YES/CANCEL/RESCHEDULE/MEMBER routing",
+      "4. Weekly Report (Monday 8AM) — Revenue, bookings, AI rate, time saved",
+      "5. Post-Visit Feedback (11AM daily) — Star rating collection",
+      "6. Monthly Re-engagement (1st of month) — Lapsed client win-back with discount offer"
+    ],
+    "medspa_specific_features": [
+      "Service detection: Botox, Fillers, Lip Filler, HydraFacial, Chemical Peel, Laser, Microneedling, PRP, RF",
+      "Provider auto-assignment: Dr. Reeves (injectables), Dr. Chen (laser), Maya (facials)",
+      "Treatment-specific prep instructions in reminder SMS",
+      "Package/membership upsell detection and follow-up SMS",
+      "Revenue tracking per call (estimated service price)",
+      "Total spend tracking per client over time",
+      "VIP client detection",
+      "60-day lapsed client re-engagement with personalised discount"
+    ],
+    "setup_steps": [
+      "1. Import this JSON into n8n",
+      "2. Replace YOUR_AIRTABLE_BASE_ID with your base ID",
+      "3. Replace YOUR_GOOGLE_CALENDAR_ID with calendar ID",
+      "4. Replace YOUR_TWILIO_ACCOUNT_SID, AUTH_TOKEN, PHONE_NUMBER",
+      "5. Set Vapi webhook: https://your-n8n.com/webhook/vapi-medspa-call-ended",
+      "6. Set Twilio SMS webhook: https://your-n8n.com/webhook/medspa-sms-reply",
+      "7. Update spa name, address, phone in all SMS messages",
+      "8. Update provider names to match real staff",
+      "9. Update pricing in the Parse node's service list",
+      "10. Activate all workflows"
+    ]
+  }
+}

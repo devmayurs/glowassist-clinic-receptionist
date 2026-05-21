@@ -1,0 +1,88 @@
+{
+  "name": "GlowAssist AI — Chat Message Handler",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "chat-message",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-chat",
+      "name": "💬 Chat Message Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "notes": "Receives chat messages from frontend. Expects: { message, history, mode }"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst result = items.map(item => {\n  const history = item.json.history || [];\n  const transformedHistory = history.map(msg => ({\n    role: msg.role === 'user' ? 'user' : 'model',\n    parts: [{ text: msg.content }]\n  }));\n  const currentMessage = item.json.message;\n  if (currentMessage) {\n    transformedHistory.push({\n      role: 'user',\n      parts: [{ text: currentMessage }]\n    });\n  }\n  return {\n    json: {\n      ...item.json,\n      geminiContents: transformedHistory\n    }\n  };\n});\nreturn result;"
+      },
+      "id": "code-transform-history",
+      "name": "🔄 Transform History to Gemini Format",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [375, 300],
+      "notes": "Converts Claude-style history to Gemini format and adds current message"
+    },
+    {
+      "parameters": {
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={{$env.GEMINI_API_KEY}}",
+        "method": "POST",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "systemInstruction",
+              "value": "={ \"parts\": [{ \"text\": \"You are Aria, a warm and sophisticated AI concierge for Lumière Med Spa. You ONLY answer questions related to medspa services (Botox, dermal fillers, facials, laser treatments, microneedling, chemical peels, laser hair removal, RF skin tightening), appointment scheduling, skincare advice, clinic hours, pricing, memberships, and clinic policies. For any non-medspa questions (e.g., general knowledge, other businesses, personal queries), politely decline to answer and state you can only assist with Lumière Med Spa related questions. Keep replies concise (2-4 sentences), elegant, and professional. Represent the luxury brand.\nSpa info: Hours Mon-Sat 9AM-7PM, Sun 10AM-5PM. Location: 45 Blossom Avenue, Suite 200.\nServices & pricing: Botox $14/unit (avg $280-450), Dermal Fillers $650-950, HydraFacial $280, VI Chemical Peel $350, Laser Resurfacing $650, Microneedling $380, Microneedling+PRP $580, Lip Filler $480, Laser Hair Removal (varies), RF Skin Tightening $420.\nMemberships: Radiance Membership $299/mo (1 HydraFacial + 20% off), Botox Club $199/mo (40 units), Glow Bundle 6 Peels $1,499.\nProviders: Dr. Reeves (Botox/Fillers), Dr. Chen (Laser), Esthetician Maya (Facials/Peels).\nAvailable today: 11AM, 2PM, 4:30PM.\nAlways collect client name and phone for bookings. Suggest memberships when client books 3+ sessions.\" }] }"
+            },
+            {
+              "name": "contents",
+              "value": "={{$json.geminiContents}}"
+            },
+            {
+              "name": "generationConfig",
+              "value": "{ \"temperature\": 0.7, \"maxOutputTokens\": 1000 }"
+            }
+          ]
+        },
+        "headers": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        }
+      },
+      "id": "http-gemini",
+      "name": "🤖 Call Gemini API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [500, 300],
+      "notes": "Sends medspa-restricted query to Gemini API and returns response"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"received\", \"reply\": \"{{$node[\"🤖 Call Gemini API\"].json.candidates[0].content.parts[0].text}}\" }",
+        "options": {}
+      },
+      "id": "webhook-response",
+      "name": "✔️ Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [750, 300]
+    }
+  ],
+  "connections": {
+    "💬 Chat Message Webhook": {
+      "main": [[{ "node": "🔄 Transform History to Gemini Format", "type": "main", "index": 0 }]]
+    },
+    "🔄 Transform History to Gemini Format": {
+      "main": [[{ "node": "🤖 Call Gemini API", "type": "main", "index": 0 }]]
+    },
+    "🤖 Call Gemini API": {
+      "main": [[{ "node": "✔️ Webhook Response", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "tags": ["chat", "ai", "glowassist", "gemini"]
+}

@@ -1,0 +1,1560 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GlowAssist AI — Med Spa Receptionist</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --ivory: #FAF8F5;
+      --warm: #F4EFE8;
+      --deep: #1C1410;
+      --brown: #3D2B1F;
+      --rose: #C9847A;
+      --rose-light: #E8A89F;
+      --rose-pale: #F9EDEB;
+      --rose-glow: rgba(201, 132, 122, 0.18);
+      --gold: #B8965A;
+      --gold-light: #D4AF7A;
+      --gold-pale: #FBF5E8;
+      --sage: #7A9E7E;
+      --sage-pale: #EDF3EE;
+      --plum: #7B4F6E;
+      --plum-pale: #F3EBF1;
+      --text: #2A1F1A;
+      --text-muted: #8A7268;
+      --border: #E8DDD6;
+      --white: #FFFFFF;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Jost', sans-serif;
+      background: var(--ivory);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Subtle grain texture */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 999;
+      opacity: 0.6;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      background: var(--deep);
+      height: 62px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid rgba(184, 150, 90, 0.25);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+    }
+
+    .logo-mark {
+      width: 34px;
+      height: 34px;
+      border: 1px solid var(--gold);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      color: var(--gold-light);
+    }
+
+    .logo-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: var(--white);
+      letter-spacing: 0.5px;
+    }
+
+    .logo-text em {
+      color: var(--gold-light);
+      font-style: italic;
+    }
+
+    .header-center {
+      font-size: 0.72rem;
+      color: rgba(255, 255, 255, 0.4);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .live-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid rgba(184, 150, 90, 0.4);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 0.68rem;
+      color: var(--gold-light);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--gold-light);
+      border-radius: 50%;
+      animation: glow 1.8s infinite;
+    }
+
+    @keyframes glow {
+
+      0%,
+      100% {
+        opacity: 1;
+        box-shadow: 0 0 4px var(--gold)
+      }
+
+      50% {
+        opacity: 0.4;
+        box-shadow: none
+      }
+    }
+
+    /* ── LAYOUT ── */
+    .app {
+      display: grid;
+      grid-template-columns: 250px 1fr 370px;
+      height: calc(100vh - 62px);
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      background: var(--white);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .sidebar-block {
+      padding: 1.25rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sb-label {
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.85rem;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+
+    .stat-tile {
+      background: var(--warm);
+      border-radius: 10px;
+      padding: 0.8rem;
+      text-align: center;
+      border: 1px solid var(--border);
+    }
+
+    .stat-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.7rem;
+      font-weight: 600;
+      color: var(--rose);
+      line-height: 1;
+    }
+
+    .stat-lbl {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0.6rem 0.75rem;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-bottom: 2px;
+    }
+
+    .nav-link:hover,
+    .nav-link.active {
+      background: var(--rose-pale);
+      color: var(--rose);
+    }
+
+    .nav-link .ico {
+      width: 18px;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+
+    .nbadge {
+      margin-left: auto;
+      background: var(--rose);
+      color: white;
+      font-size: 0.62rem;
+      font-weight: 700;
+      border-radius: 10px;
+      padding: 1px 7px;
+    }
+
+    /* Clients */
+    .client-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 0.6rem 0.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+      margin-bottom: 2px;
+    }
+
+    .client-row:hover {
+      background: var(--warm);
+    }
+
+    .ava {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.72rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      border: 1px solid var(--border);
+    }
+
+    .ci {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .cn {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .cs {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .cstatus {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ── MAIN ── */
+    .main {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .tabs-bar {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 0 1.5rem;
+      display: flex;
+      gap: 0;
+    }
+
+    .tab {
+      padding: 1rem 1.1rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+      white-space: nowrap;
+      letter-spacing: 0.2px;
+    }
+
+    .tab.active {
+      color: var(--rose);
+      border-bottom-color: var(--rose);
+    }
+
+    .main-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem;
+    }
+
+    /* ── CARDS ── */
+    .page-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.1rem;
+    }
+
+    .page-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--deep);
+      letter-spacing: -0.3px;
+    }
+
+    .btn {
+      padding: 0.48rem 1.1rem;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      font-family: 'Jost', sans-serif;
+      transition: all 0.15s;
+      letter-spacing: 0.3px;
+    }
+
+    .btn-rose {
+      background: var(--rose);
+      color: white;
+    }
+
+    .btn-rose:hover {
+      background: var(--rose-light);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--rose);
+      border: 1px solid var(--rose);
+    }
+
+    .btn-outline:hover {
+      background: var(--rose-pale);
+    }
+
+    /* Table */
+    .data-table {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 1.25rem;
+    }
+
+    .data-table table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .data-table th {
+      background: var(--warm);
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 0.7rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .data-table td {
+      padding: 0.8rem 1rem;
+      font-size: 0.8rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    .data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .data-table tr:hover td {
+      background: rgba(201, 132, 122, 0.03);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.68rem;
+      font-weight: 600;
+    }
+
+    .pill-confirmed {
+      background: var(--sage-pale);
+      color: var(--sage);
+    }
+
+    .pill-pending {
+      background: var(--gold-pale);
+      color: var(--gold);
+    }
+
+    .pill-vip {
+      background: var(--plum-pale);
+      color: var(--plum);
+    }
+
+    .pill-cancelled {
+      background: #F5F3F0;
+      color: #B0A098;
+    }
+
+    .pill-completed {
+      background: var(--rose-pale);
+      color: var(--rose);
+    }
+
+    .ai-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      background: var(--rose-pale);
+      color: var(--rose);
+      font-size: 0.62rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    /* LOG CARDS */
+    .log-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.2rem;
+      margin-bottom: 0.7rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .log-card:hover {
+      border-color: var(--rose);
+      box-shadow: 0 2px 16px var(--rose-glow);
+    }
+
+    .log-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.4rem;
+    }
+
+    .log-name {
+      font-weight: 600;
+      font-size: 0.87rem;
+    }
+
+    .log-meta {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .log-summary {
+      font-size: 0.79rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+      margin-bottom: 0.45rem;
+    }
+
+    .log-chips {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      font-size: 0.65rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .chip-booked {
+      background: var(--sage-pale);
+      color: var(--sage);
+    }
+
+    .chip-vip {
+      background: var(--plum-pale);
+      color: var(--plum);
+    }
+
+    .chip-new {
+      background: #EEF2FF;
+      color: #4F46E5;
+    }
+
+    .chip-pkg {
+      background: var(--gold-pale);
+      color: var(--gold);
+    }
+
+    .chip-followup {
+      background: var(--rose-pale);
+      color: var(--rose);
+    }
+
+    /* ANALYTICS */
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .a-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.2rem;
+    }
+
+    .a-card h3 {
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+
+    .bar-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .bar-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.75rem;
+    }
+
+    .bar-lbl {
+      width: 90px;
+      color: var(--text-muted);
+      font-size: 0.7rem;
+    }
+
+    .bar-track {
+      flex: 1;
+      height: 7px;
+      background: var(--warm);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      background: linear-gradient(90deg, var(--rose), var(--rose-light));
+    }
+
+    .bar-val {
+      width: 28px;
+      text-align: right;
+      font-weight: 600;
+      color: var(--text);
+      font-size: 0.72rem;
+    }
+
+    .revenue-big {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.6rem;
+      font-weight: 600;
+      color: var(--gold);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .revenue-sub {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+
+    /* ── CHAT PANEL ── */
+    .chat-panel {
+      border-left: 1px solid var(--border);
+      background: var(--white);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .call-banner {
+      background: linear-gradient(135deg, var(--deep), var(--brown));
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.8rem;
+      border-bottom: 1px solid rgba(184, 150, 90, 0.3);
+    }
+
+    .call-orb {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--rose);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      animation: callRing 1.8s infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes callRing {
+
+      0%,
+      100% {
+        box-shadow: 0 0 0 0 rgba(201, 132, 122, 0.6)
+      }
+
+      50% {
+        box-shadow: 0 0 0 8px rgba(201, 132, 122, 0)
+      }
+    }
+
+    .call-info {
+      flex: 1;
+    }
+
+    .call-tag {
+      font-size: 0.62rem;
+      color: rgba(255, 255, 255, 0.45);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .call-who {
+      color: white;
+      font-weight: 600;
+      font-size: 0.83rem;
+    }
+
+    .call-dur {
+      font-size: 0.75rem;
+      color: var(--gold-light);
+      font-weight: 600;
+    }
+
+    .chat-top {
+      padding: 0.9rem 1.1rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .ai-orb {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--rose), var(--rose-light));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+      border: 2px solid rgba(201, 132, 122, 0.3);
+    }
+
+    .chat-agent-name {
+      font-weight: 700;
+      font-size: 0.88rem;
+      color: var(--deep);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1rem;
+    }
+
+    .chat-agent-status {
+      font-size: 0.68rem;
+      color: var(--sage);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .chat-agent-status::before {
+      content: '';
+      width: 5px;
+      height: 5px;
+      background: var(--sage);
+      border-radius: 50%;
+      display: inline-block;
+      animation: glow 1.8s infinite;
+    }
+
+    .mode-toggle {
+      margin-left: auto;
+      display: flex;
+      background: var(--warm);
+      border-radius: 8px;
+      padding: 3px;
+    }
+
+    .mode-btn {
+      padding: 4px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      color: var(--text-muted);
+      transition: all 0.15s;
+      border: none;
+      background: transparent;
+      font-family: 'Jost', sans-serif;
+      font-size: 0.7rem;
+    }
+
+    .mode-btn.active {
+      background: var(--white);
+      color: var(--rose);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    }
+
+    .chat-msgs {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      scroll-behavior: smooth;
+    }
+
+    .msg {
+      display: flex;
+      gap: 7px;
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(8px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .msg.user {
+      flex-direction: row-reverse;
+    }
+
+    .msg-av {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .msg-av.ai {
+      background: linear-gradient(135deg, var(--rose), var(--rose-light));
+    }
+
+    .msg-av.user {
+      background: var(--deep);
+      color: white;
+    }
+
+    .bubble {
+      max-width: 82%;
+      padding: 0.6rem 0.85rem;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      line-height: 1.55;
+    }
+
+    .msg.ai .bubble {
+      background: var(--warm);
+      color: var(--text);
+      border-bottom-left-radius: 4px;
+      border: 1px solid var(--border);
+    }
+
+    .msg.user .bubble {
+      background: var(--rose);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+
+    .msg-t {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .msg.ai .msg-t {
+      text-align: left;
+    }
+
+    .msg.user .msg-t {
+      text-align: right;
+    }
+
+    .typing {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      padding: 0.6rem 0.85rem;
+      background: var(--warm);
+      border-radius: 12px;
+      border-bottom-left-radius: 4px;
+      width: fit-content;
+      border: 1px solid var(--border);
+    }
+
+    .tdot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      animation: bounce 1.2s infinite;
+    }
+
+    .tdot:nth-child(2) {
+      animation-delay: .2s
+    }
+
+    .tdot:nth-child(3) {
+      animation-delay: .4s
+    }
+
+    @keyframes bounce {
+
+      0%,
+      60%,
+      100% {
+        transform: translateY(0)
+      }
+
+      30% {
+        transform: translateY(-5px)
+      }
+    }
+
+    .quick-bar {
+      padding: 0.5rem 0.9rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .qr {
+      padding: 4px 10px;
+      border: 1px solid var(--rose);
+      border-radius: 20px;
+      font-size: 0.7rem;
+      color: var(--rose);
+      cursor: pointer;
+      background: white;
+      font-family: 'Jost', sans-serif;
+      transition: all 0.15s;
+    }
+
+    .qr:hover {
+      background: var(--rose);
+      color: white;
+    }
+
+    .chat-input-row {
+      padding: 0.7rem 0.9rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 7px;
+      align-items: flex-end;
+    }
+
+    .chat-input {
+      flex: 1;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.55rem 0.8rem;
+      font-size: 0.8rem;
+      font-family: 'Jost', sans-serif;
+      color: var(--text);
+      background: var(--warm);
+      resize: none;
+      outline: none;
+      min-height: 38px;
+      max-height: 90px;
+      transition: border-color 0.15s;
+    }
+
+    .chat-input:focus {
+      border-color: var(--rose);
+      background: white;
+    }
+
+    .send-btn {
+      width: 38px;
+      height: 38px;
+      background: var(--rose);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+
+    .send-btn:hover {
+      background: var(--rose-light);
+    }
+
+    .send-btn:disabled {
+      background: var(--border);
+      cursor: not-allowed;
+    }
+
+    /* TOASTS */
+    .toasts {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .toast {
+      background: var(--deep);
+      color: white;
+      padding: 0.7rem 1rem;
+      border-radius: 12px;
+      font-size: 0.79rem;
+      max-width: 290px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      animation: toastIn 0.3s ease, toastOut 0.3s ease 3.7s forwards;
+      border-left: 3px solid var(--rose);
+    }
+
+    @keyframes toastIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0
+      }
+
+      to {
+        transform: translateX(0);
+        opacity: 1
+      }
+    }
+
+    @keyframes toastOut {
+      to {
+        transform: translateX(100%);
+        opacity: 0
+      }
+    }
+
+    ::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 2px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header class="header">
+    <div class="logo">
+      <div class="logo-mark">✦</div>
+      <div class="logo-text">Glow<em>Assist</em> AI</div>
+    </div>
+    <div class="header-center">Lumière Med Spa &nbsp;·&nbsp; AI Concierge System</div>
+    <div class="header-right">
+      <div class="live-pill">
+        <div class="live-dot"></div>Live
+      </div>
+    </div>
+  </header>
+
+  <div class="app">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-block">
+        <div class="sb-label">Today's Overview</div>
+        <div class="stat-grid">
+          <div class="stat-tile">
+            <div class="stat-num" id="s-calls">0</div>
+            <div class="stat-lbl">Calls Handled</div>
+          </div>
+          <div class="stat-tile">
+            <div class="stat-num" id="s-appts">0</div>
+            <div class="stat-lbl">Bookings</div>
+          </div>
+          <div class="stat-tile">
+            <div class="stat-num" id="s-new">0</div>
+            <div class="stat-lbl">New Clients</div>
+          </div>
+          <div class="stat-tile">
+            <div class="stat-num" id="s-rev" style="color:var(--gold)">0</div>
+            <div class="stat-lbl">Est. Revenue</div>
+          </div>
+        </div>
+      </div>
+      <div class="sidebar-block">
+        <div class="sb-label">Menu</div>
+        <div class="nav-link active" onclick="switchTab('appointments',this)"><span class="ico">📅</span>Appointments
+        </div>
+        <div class="nav-link" onclick="switchTab('calls',this)"><span class="ico">📞</span>Call Logs <span
+            class="nbadge">4</span></div>
+        <div class="nav-link" onclick="switchTab('analytics',this)"><span class="ico">✦</span>Analytics</div>
+        <div class="nav-link" onclick="switchTab('clients',this)"><span class="ico">👤</span>Clients</div>
+        <div class="nav-link" onclick="switchTab('packages',this)"><span class="ico">🎁</span>Packages</div>
+      </div>
+      <div class="sidebar-block" style="flex:1">
+        <div class="sb-label">Recent Clients</div>
+        <div id="client-list"></div>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+      <div class="tabs-bar">
+        <div class="tab active" id="tab-appointments">📅 Appointments</div>
+        <div class="tab" id="tab-calls">📞 Call Logs</div>
+        <div class="tab" id="tab-analytics">✦ Analytics</div>
+        <div class="tab" id="tab-clients">👤 Clients</div>
+        <div class="tab" id="tab-packages">🎁 Packages</div>
+      </div>
+      <div class="main-body" id="main-body"></div>
+    </main>
+
+    <!-- CHAT PANEL -->
+    <aside class="chat-panel">
+      <div id="call-banner-area"></div>
+      <div class="chat-top">
+        <div class="ai-orb">✦</div>
+        <div>
+          <div class="chat-agent-name">Aria — AI Concierge</div>
+          <div class="chat-agent-status">Online &amp; Attending</div>
+        </div>
+        <div class="mode-toggle">
+          <button class="mode-btn active" id="m-sim" onclick="setMode('sim')">Simulate</button>
+          <button class="mode-btn" id="m-live" onclick="setMode('live')">Live AI</button>
+        </div>
+      </div>
+      <div class="chat-msgs" id="chat-msgs">
+        <div class="msg ai">
+          <div class="msg-av ai">✦</div>
+          <div>
+            <div class="bubble">Welcome to Lumière Med Spa 🌸 I'm Aria, your personal concierge. How may I assist you
+              today?</div>
+            <div class="msg-t">Just now</div>
+          </div>
+        </div>
+      </div>
+      <div class="quick-bar">
+        <button class="qr" onclick="sendQ('I want to book a Botox appointment')">💉 Botox</button>
+        <button class="qr" onclick="sendQ('Tell me about your facial treatments')">✨ Facials</button>
+        <button class="qr" onclick="sendQ('What are your prices?')">💰 Pricing</button>
+        <button class="qr" onclick="sendQ('Do you have membership packages?')">🎁 Memberships</button>
+        <button class="qr" onclick="sendQ('What are your hours?')">🕐 Hours</button>
+      </div>
+      <div class="chat-input-row">
+        <textarea class="chat-input" id="chat-in" placeholder="Type a client message…" rows="1"
+          onkeydown="handleKey(event)"></textarea>
+        <button class="send-btn" id="send-btn" onclick="sendMsg()">➤</button>
+      </div>
+    </aside>
+  </div>
+
+  <div class="toasts" id="toasts"></div>
+
+  <script>
+    // ── DATA ──
+    const clients = [
+      { name: 'Sophia Laurent', ini: 'SL', bg: '#F9EDEB', tc: '#C9847A', last: 'Botox + Filler', status: '#7A9E7E' },
+      { name: 'Isabella Park', ini: 'IP', bg: '#F3EBF1', tc: '#7B4F6E', last: 'HydraFacial', status: '#C9847A' },
+      { name: 'Natasha Rivera', ini: 'NR', bg: '#FBF5E8', tc: '#B8965A', last: 'Laser Resurfacing', status: '#7A9E7E' },
+      { name: 'Chloe Winters', ini: 'CW', bg: '#EDF3EE', tc: '#7A9E7E', last: 'Chemical Peel', status: '#7A9E7E' },
+      { name: 'Amara Singh', ini: 'AS', bg: '#F9EDEB', tc: '#C9847A', last: 'Microneedling', status: '#B8965A' },
+    ];
+
+    const appointments = [
+      { time: '9:30 AM', client: 'Sophia Laurent', service: 'Botox — Forehead & Crow\'s Feet', provider: 'Dr. Reeves', status: 'confirmed', bookedBy: 'AI', ini: 'SL', bg: '#F9EDEB', tc: '#C9847A', price: '$450' },
+      { time: '10:15 AM', client: 'Isabella Park', service: 'HydraFacial Deluxe', provider: 'Esthetician Maya', status: 'confirmed', bookedBy: 'AI', ini: 'IP', bg: '#F3EBF1', tc: '#7B4F6E', price: '$280' },
+      { time: '11:00 AM', client: 'New Client', service: 'Dermal Filler Consultation', provider: 'Dr. Reeves', status: 'pending', bookedBy: 'AI', ini: 'NC', bg: '#FBF5E8', tc: '#B8965A', price: 'Free' },
+      { time: '12:30 PM', client: 'Natasha Rivera', service: 'Laser Skin Resurfacing', provider: 'Dr. Chen', status: 'confirmed', bookedBy: 'Human', ini: 'NR', bg: '#FBF5E8', tc: '#B8965A', price: '$650' },
+      { time: '2:00 PM', client: 'Chloe Winters', service: 'VI Chemical Peel', provider: 'Esthetician Maya', status: 'vip', bookedBy: 'AI', ini: 'CW', bg: '#EDF3EE', tc: '#7A9E7E', price: '$350' },
+      { time: '3:30 PM', client: 'Amara Singh', service: 'Microneedling + PRP', provider: 'Dr. Chen', status: 'confirmed', bookedBy: 'AI', ini: 'AS', bg: '#F9EDEB', tc: '#C9847A', price: '$580' },
+      { time: '4:45 PM', client: 'Priya Mehta', service: 'Lip Filler', provider: 'Dr. Reeves', status: 'confirmed', bookedBy: 'AI', ini: 'PM', bg: '#F3EBF1', tc: '#7B4F6E', price: '$480' },
+    ];
+
+    const callLogs = [
+      { client: 'Sophia Laurent', time: '8:55 AM', dur: '4m 10s', summary: 'Returning VIP client called to book her quarterly Botox session. AI recognised her as returning client, pre-filled her preferences (forehead + crow\'s feet, Dr. Reeves preferred). Booking confirmed for 9:30 AM. Membership discount applied automatically.', chips: ['booked', 'vip'] },
+      { client: 'New Client — Jessica T.', time: '8:30 AM', dur: '5m 22s', summary: 'First-time caller inquiring about anti-ageing treatments. Expressed interest in Botox and fillers. AI explained treatment options, pricing, and aftercare. Consultation slot booked. New client profile created.', chips: ['new', 'booked'] },
+      { client: 'Chloe Winters', time: '7:58 AM', dur: '2m 45s', summary: 'Package holder called to use one of her 6-session peel package credits. AI verified package balance (3 sessions remaining). Booking confirmed. Remaining sessions updated.', chips: ['pkg', 'booked'] },
+      { client: 'Unknown — (555) 912-3456', time: '7:30 AM', dur: '3m 05s', summary: 'Caller asked about laser hair removal pricing for full leg and Brazilian. AI provided full pricing breakdown and treatment timeline. Caller asked to think about it and call back. Follow-up reminder set.', chips: ['followup'] },
+    ];
+
+    const packages = [
+      { name: 'Radiance Membership', price: '$299/mo', includes: '1 HydraFacial + 20% off all treatments + priority booking', active: 14 },
+      { name: 'Glow Bundle — 6 Peels', price: '$1,499', includes: '6 VI Chemical Peels (save $601)', active: 8 },
+      { name: 'Botox Club', price: '$199/mo', includes: 'Up to 40 units Botox monthly + free consultations', active: 22 },
+      { name: 'Laser Package — 6 Sessions', price: '$2,400', includes: '6 laser resurfacing sessions (save $700)', active: 5 },
+    ];
+
+    let mode = 'sim', busy = false;
+
+    // ── BOOT ──
+    document.addEventListener('DOMContentLoaded', () => {
+      renderClientList();
+      renderContent('appointments');
+      animStats();
+      setTimeout(() => toast('✨ Sophia Laurent booked Botox — 9:30 AM confirmed'), 1800);
+      setTimeout(() => toast('🎁 Chloe Winters used Package Credit — Peel booked'), 4500);
+      setTimeout(() => toast('📱 Appointment reminders sent to 7 clients'), 8000);
+      setTimeout(showLiveCall, 3200);
+    });
+
+    function animStats() {
+      const targets = { ' s-calls': 14, 's-appts': 7, 's-new': 3, 's-rev': 23 };
+      [['s-calls', 14], ['s-appts', 7], ['s-new', 3], ['s-rev', 23]].forEach(([id, t]) => {
+        let v = 0; const el = document.getElementById(id);
+        const iv = setInterval(() => { v++; el.textContent = id === 's-rev' ? `$${v * 300}` : v; if (v >= t) clearInterval(iv); }, 70);
+      });
+    }
+
+    function renderClientList() {
+      document.getElementById('client-list').innerHTML = clients.map(c => `
+    <div class="client-row">
+      <div class="ava" style="background:${c.bg};color:${c.tc}">${c.ini}</div>
+      <div class="ci"><div class="cn">${c.name}</div><div class="cs">${c.last}</div></div>
+      <div class="cstatus" style="background:${c.status}"></div>
+    </div>`).join('');
+    }
+
+    function switchTab(tab, el) {
+      document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+      if (el) el.classList.add('active');
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      const te = document.getElementById('tab-' + tab); if (te) te.classList.add('active');
+      renderContent(tab);
+    }
+    document.querySelectorAll('.tab').forEach(t => {
+      t.addEventListener('click', function () {
+        const tab = this.id.replace('tab-', '');
+        document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+        this.classList.add('active');
+        renderContent(tab);
+      });
+    });
+
+    function renderContent(tab) {
+      const b = document.getElementById('main-body');
+      if (tab === 'appointments') b.innerHTML = renderAppts();
+      else if (tab === 'calls') b.innerHTML = renderCalls();
+      else if (tab === 'analytics') b.innerHTML = renderAnalytics();
+      else if (tab === 'clients') b.innerHTML = renderClients();
+      else if (tab === 'packages') b.innerHTML = renderPackages();
+    }
+
+    // ── APPOINTMENTS ──
+    function renderAppts() {
+      const smap = {
+        confirmed: '<span class="pill pill-confirmed">✓ Confirmed</span>',
+        pending: '<span class="pill pill-pending">◷ Pending</span>',
+        vip: '<span class="pill pill-vip">♛ VIP</span>',
+        cancelled: '<span class="pill pill-cancelled">✕ Cancelled</span>',
+      };
+      return `
+  <div class="page-head">
+    <div class="page-title">Today's Schedule</div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-outline">Sync Calendar</button>
+      <button class="btn btn-rose">+ Add Slot</button>
+    </div>
+  </div>
+  <div class="data-table">
+    <table>
+      <thead><tr><th>Time</th><th>Client</th><th>Treatment</th><th>Provider</th><th>Status</th><th>Price</th><th>Booked By</th></tr></thead>
+      <tbody>${appointments.map(a => `
+        <tr>
+          <td><strong>${a.time}</strong></td>
+          <td><div style="display:flex;align-items:center;gap:8px">
+            <div class="ava" style="width:26px;height:26px;font-size:0.65rem;background:${a.bg};color:${a.tc}">${a.ini}</div>
+            <span style="font-weight:600">${a.client}</span>
+          </div></td>
+          <td style="color:var(--text-muted)">${a.service}</td>
+          <td style="color:var(--text-muted)">${a.provider}</td>
+          <td>${smap[a.status] || ''}</td>
+          <td style="font-weight:600;color:var(--gold)">${a.price}</td>
+          <td>${a.bookedBy === 'AI' ? '<span class="ai-chip">✦ AI</span>' : '<span style="font-size:0.72rem;color:var(--text-muted)">👤 Human</span>'}</td>
+        </tr>`).join('')}</tbody>
+    </table>
+  </div>
+  <div style="background:linear-gradient(135deg,var(--rose-pale),var(--gold-pale));border:1px solid var(--rose);border-radius:12px;padding:1rem 1.2rem;display:flex;align-items:center;gap:10px;font-size:0.82rem;color:var(--brown)">
+    ✦ <strong>AI booked 6 of 7 appointments today</strong> — estimated revenue automated: <strong style="color:var(--gold)">$3,240</strong> with zero receptionist effort.
+  </div>`;
+    }
+
+    // ── CALLS ──
+    function renderCalls() {
+      const cmap = {
+        booked: '<span class="chip chip-booked">✓ Booked</span>',
+        vip: '<span class="chip chip-vip">♛ VIP</span>',
+        new: '<span class="chip chip-new">★ New</span>',
+        pkg: '<span class="chip chip-pkg">🎁 Package</span>',
+        followup: '<span class="chip chip-followup">↻ Follow-up</span>',
+      };
+      document.getElementById('nbadge') && (document.getElementById('nbadge').style.display = 'none');
+      return `
+  <div class="page-head">
+    <div class="page-title">Call Logs</div>
+    <button class="btn btn-outline">Export</button>
+  </div>
+  ${callLogs.map(l => `
+    <div class="log-card">
+      <div class="log-top">
+        <div class="log-name">${l.client}</div>
+        <div class="log-meta"><span>⏱ ${l.dur}</span><span>${l.time}</span></div>
+      </div>
+      <div class="log-summary">${l.summary}</div>
+      <div class="log-chips">${l.chips.map(c => cmap[c] || '').join('')}</div>
+    </div>`).join('')}`;
+    }
+
+    // ── ANALYTICS ──
+    function renderAnalytics() {
+      return `
+  <div class="page-head"><div class="page-title">Performance Analytics</div><button class="btn btn-outline">Download Report</button></div>
+  <div class="analytics-grid">
+    <div class="a-card">
+      <h3>Top Treatments Booked</h3>
+      <div class="bar-list">
+        ${[['Botox', 42], ['HydraFacial', 35], ['Fillers', 28], ['Laser', 19], ['Chemical Peel', 16], ['Microneedling', 12]].map(([l, v]) => `
+        <div class="bar-row">
+          <span class="bar-lbl">${l}</span>
+          <div class="bar-track"><div class="bar-fill" style="width:${Math.round(v / 42 * 100)}%"></div></div>
+          <span class="bar-val">${v}</span>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="a-card">
+      <h3>Monthly Revenue (AI-Booked)</h3>
+      <div class="revenue-big">$24,380</div>
+      <div class="revenue-sub">This month · 78% booked by AI agent</div>
+      <div class="bar-list">
+        ${[['Week 1', '$5,200'], ['Week 2', '$6,800'], ['Week 3', '$5,980'], ['Week 4', '$6,400']].map(([w, v]) => `
+        <div class="bar-row">
+          <span class="bar-lbl">${w}</span>
+          <div class="bar-track"><div class="bar-fill" style="width:${Math.round(parseInt(v.replace(/\D/g, '')) / 6800 * 100)}%;background:linear-gradient(90deg,var(--gold),var(--gold-light))"></div></div>
+          <span class="bar-val" style="color:var(--gold)">${v}</span>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="a-card">
+      <h3>Calls This Week</h3>
+      <div class="bar-list">
+        ${[['Mon', 22], ['Tue', 31], ['Wed', 18], ['Thu', 27], ['Fri', 24], ['Sat', 15]].map(([d, v]) => `
+        <div class="bar-row">
+          <span class="bar-lbl">${d}</span>
+          <div class="bar-track"><div class="bar-fill" style="width:${Math.round(v / 31 * 100)}%"></div></div>
+          <span class="bar-val">${v}</span>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="a-card">
+      <h3>Client Satisfaction</h3>
+      <div style="text-align:center;padding:.5rem 0">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:3rem;font-weight:600;color:var(--gold);line-height:1">4.9</div>
+        <div style="color:var(--gold);font-size:1.2rem;margin:4px 0">★★★★★</div>
+        <div style="font-size:0.75rem;color:var(--text-muted)">Based on 63 post-visit SMS responses</div>
+        <div style="margin-top:1rem;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div style="background:var(--warm);border-radius:8px;padding:8px;text-align:center">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:var(--rose)">82%</div>
+            <div style="font-size:0.65rem;color:var(--text-muted)">AI booking rate</div>
+          </div>
+          <div style="background:var(--warm);border-radius:8px;padding:8px;text-align:center">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:var(--sage)">0</div>
+            <div style="font-size:0.65rem;color:var(--text-muted)">Missed calls</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="background:var(--deep);border-radius:14px;padding:1.25rem 1.5rem;color:white">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;margin-bottom:.6rem;color:var(--gold-light)">✦ AI Insight</div>
+    <div style="font-size:0.82rem;opacity:.75;line-height:1.75">Tuesday is peak call day (31 calls). Botox is the most requested service — consider creating a <strong style="color:var(--gold-light)">"Botox Tuesday" promotion</strong> to maximise revenue on high-traffic days. The AI agent is currently saving an estimated <strong style="color:var(--rose-light)">5.2 hours</strong> of receptionist time per week.</div>
+  </div>`;
+    }
+
+    // ── CLIENTS ──
+    function renderClients() {
+      const all = [...clients, { name: 'Jessica Thompson', ini: 'JT', bg: '#FBF5E8', tc: '#B8965A', last: 'New — Consultation', status: '#B8965A' }, { name: 'Maya Goldstein', ini: 'MG', bg: '#F3EBF1', tc: '#7B4F6E', last: 'Botox Club Member', status: '#7A9E7E' }];
+      return `
+  <div class="page-head"><div class="page-title">Client Database</div><button class="btn btn-outline">Export</button></div>
+  <div class="data-table">
+    <table>
+      <thead><tr><th>Client</th><th>Last Service</th><th>Membership</th><th>Visits</th><th>Satisfaction</th><th>Source</th></tr></thead>
+      <tbody>${all.map((c, i) => `
+        <tr>
+          <td><div style="display:flex;align-items:center;gap:8px">
+            <div class="ava" style="width:28px;height:28px;font-size:0.68rem;background:${c.bg};color:${c.tc}">${c.ini}</div>
+            <span style="font-weight:600">${c.name}</span>
+          </div></td>
+          <td style="color:var(--text-muted)">${c.last}</td>
+          <td>${i < 3 ? '<span class="pill pill-vip">♛ Active</span>' : '<span style="font-size:0.72rem;color:var(--text-muted)">None</span>'}</td>
+          <td style="color:var(--text-muted)">${[6, 3, 8, 2, 4, 1, 9][i] || 1}</td>
+          <td style="color:var(--gold)">${'★'.repeat(5)}</td>
+          <td><span class="ai-chip">✦ AI</span></td>
+        </tr>`).join('')}</tbody>
+    </table>
+  </div>`;
+    }
+
+    // ── PACKAGES ──
+    function renderPackages() {
+      return `
+  <div class="page-head"><div class="page-title">Memberships & Packages</div><button class="btn btn-rose">+ New Package</button></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem">
+    ${packages.map(p => `
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:14px;padding:1.25rem;transition:all 0.15s;cursor:pointer" onmouseenter="this.style.borderColor='var(--rose)'" onmouseleave="this.style.borderColor='var(--border)'">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:600;color:var(--deep)">${p.name}</div>
+          <div style="font-weight:700;color:var(--gold);font-size:0.88rem">${p.price}</div>
+        </div>
+        <div style="font-size:0.77rem;color:var(--text-muted);margin-bottom:12px;line-height:1.5">${p.includes}</div>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:0.72rem;color:var(--rose);font-weight:600">${p.active} active clients</span>
+          <span class="ai-chip">✦ AI promotes</span>
+        </div>
+      </div>`).join('')}
+  </div>
+  <div style="background:linear-gradient(135deg,var(--rose-pale),var(--gold-pale));border:1px solid var(--border);border-radius:12px;padding:1rem 1.2rem;font-size:0.82rem;color:var(--brown)">
+    ✦ The AI agent automatically detects when a client is booking a 3rd+ session and suggests the relevant package — converting single bookings into recurring revenue.
+  </div>`;
+    }
+
+    // ── LIVE CALL ──
+    function showLiveCall() {
+      const area = document.getElementById('call-banner-area');
+      area.innerHTML = `<div class="call-banner">
+    <div class="call-orb">📞</div>
+    <div class="call-info">
+      <div class="call-tag">Active Call — AI Handling</div>
+      <div class="call-who">Incoming: (555) 784-2301</div>
+    </div>
+    <div class="call-dur" id="ctimer">0:00</div>
+  </div>`;
+      let s = 0;
+      const iv = setInterval(() => {
+        s++; const el = document.getElementById('ctimer');
+        if (el) el.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+        if (s >= 18) {
+          clearInterval(iv);
+          setTimeout(() => {
+            area.innerHTML = '';
+            toast('✦ Call ended — transcript & booking saved');
+            document.getElementById('s-calls').textContent = parseInt(document.getElementById('s-calls').textContent) + 1;
+          }, 800);
+        }
+      }, 1000);
+    }
+
+    // ── CHAT ──
+    function setMode(m) {
+      mode = m;
+      document.getElementById('m-sim').classList.toggle('active', m === 'sim');
+      document.getElementById('m-live').classList.toggle('active', m === 'live');
+      if (m === 'live') toast('🔴 Live AI — powered by Claude API');
+    }
+    function handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); } }
+    function sendQ(t) { document.getElementById('chat-in').value = t; sendMsg(); }
+    function ts() { return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+
+    function addMsg(role, text) {
+      const box = document.getElementById('chat-msgs');
+      const d = document.createElement('div');
+      d.className = 'msg ' + role;
+      d.innerHTML = `<div class="msg-av ${role}">${role === 'ai' ? '✦' : '👤'}</div><div><div class="bubble">${text}</div><div class="msg-t">${ts()}</div></div>`;
+      box.appendChild(d); box.scrollTop = box.scrollHeight;
+    }
+    function showTyping() {
+      const box = document.getElementById('chat-msgs');
+      const d = document.createElement('div');
+      d.className = 'msg ai'; d.id = 'typing';
+      d.innerHTML = `<div class="msg-av ai">✦</div><div class="typing"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div>`;
+      box.appendChild(d); box.scrollTop = box.scrollHeight;
+    }
+    function removeTyping() { const t = document.getElementById('typing'); if (t) t.remove(); }
+
+    function collectHistory() {
+      const msgs = document.querySelectorAll('#chat-msgs .msg');
+      const h = [];
+      msgs.forEach(m => {
+        if (m.id === 'typing') return;
+        const b = m.querySelector('.bubble');
+        if (b) h.push({ role: m.classList.contains('user') ? 'user' : 'assistant', content: b.textContent });
+      });
+      return h.slice(-10);
+    }
+
+    async function sendMsg() {
+      const inp = document.getElementById('chat-in');
+      const txt = inp.value.trim();
+      if (!txt || busy) return;
+      inp.value = ''; busy = true;
+      document.getElementById('send-btn').disabled = true;
+      addMsg('user', txt);
+      document.getElementById('s-calls').textContent = parseInt(document.getElementById('s-calls').textContent) + 1;
+      showTyping();
+
+      if (mode === 'sim') {
+        await sleep(1100 + Math.random() * 700);
+        removeTyping();
+        const r = simReply(txt.toLowerCase());
+        addMsg('ai', r);
+        checkBooking(r);
+      } else {
+        try {
+          const history = collectHistory();
+          const res = await fetch('http://localhost:5678/webhook/chat-message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: txt, history, mode: 'live' })
+          });
+          const data = await res.json();
+          removeTyping();
+          const reply = data.reply || data.message || "My apologies — please try again.";
+          addMsg('ai', reply);
+          checkBooking(reply);
+        } catch (e) { removeTyping(); addMsg('ai', "My apologies — I couldn't reach my AI brain. Please ensure n8n is running at http://localhost:5678. 🌸"); }
+      }
+      busy = false; document.getElementById('send-btn').disabled = false;
+    }
+
+    function checkBooking(r) {
+      const l = r.toLowerCase();
+      if (l.includes('confirmed') || l.includes('booked') || l.includes('appointment')) {
+        document.getElementById('s-appts').textContent = parseInt(document.getElementById('s-appts').textContent) + 1;
+        toast('✨ New appointment booked by AI concierge');
+      }
+    }
+
+    function simReply(t) {
+      if (t.includes('botox') || t.includes('wrinkle') || t.includes('forehead'))
+        return "Wonderful choice! ✨ Botox treatments at Lumière start from $14/unit — a typical forehead treatment uses 20–30 units ($280–420). Dr. Reeves has availability today at 11:00 AM or 4:30 PM. Shall I reserve a slot for you?";
+      if (t.includes('facial') || t.includes('hydra') || t.includes('skin'))
+        return "Our HydraFacial Deluxe is a client favourite — a deeply nourishing 60-minute treatment for $280 🌸 It cleanses, exfoliates, and infuses your skin with serums. Esthetician Maya has availability this week. Would you like to book?";
+      if (t.includes('filler') || t.includes('lip') || t.includes('cheek'))
+        return "Our dermal filler treatments are performed exclusively by Dr. Reeves, our lead aesthetic physician. Lip fillers start at $480 and cheek/jawline from $650. We always recommend a complimentary consultation first — shall I book one for you?";
+      if (t.includes('price') || t.includes('cost') || t.includes('how much'))
+        return "Here's a quick overview of our most popular treatments:\n💉 Botox: from $280\n✨ HydraFacial: $280\n💋 Lip Filler: $480\n🔬 Microneedling: $380\n🔥 Laser Resurfacing: $650\n\nWe also offer membership plans starting from $199/month. Which treatment interests you most?";
+      if (t.includes('member') || t.includes('package') || t.includes('bundle'))
+        return "We have three beautiful membership options 🎁 Our most popular is the **Radiance Membership** at $299/month — includes a monthly HydraFacial plus 20% off all treatments. For injectables, the **Botox Club** at $199/month gives you up to 40 units monthly. Shall I tell you more?";
+      if (t.includes('hour') || t.includes('open') || t.includes('time'))
+        return "Lumière Med Spa is open Monday–Saturday, 9:00 AM to 7:00 PM, and Sunday 10:00 AM to 5:00 PM 🌸 We're located at 45 Blossom Avenue, Suite 200. Is there a time you'd like to come in?";
+      if (t.includes('laser') || t.includes('hair removal') || t.includes('resurfacing'))
+        return "Our laser treatments are performed by Dr. Chen, our laser specialist ✨ Laser skin resurfacing starts at $650 per session, and laser hair removal pricing varies by area. We often recommend a package of 6 sessions for best results — would you like details on our laser package pricing?";
+      if (t.includes('book') || t.includes('appointment') || t.includes('schedule'))
+        return "It would be my pleasure to arrange that for you! 🌸 May I have your name and the treatment you're interested in? We have availability today at 11:00 AM and 4:30 PM, and throughout the week.";
+      if (t.includes('confirm') || t.includes('yes') || t.includes('perfect'))
+        return "✅ Your appointment has been beautifully confirmed. You'll receive an SMS with all the details shortly. We recommend arriving 10 minutes early to enjoy a complimentary welcome consultation. We look forward to seeing you at Lumière! 🌸";
+      return "Thank you for reaching out to Lumière Med Spa 🌸 I'd be delighted to assist you with bookings, treatment information, pricing, or anything else. What can I help you with today?";
+    }
+
+    // ── TOAST ──
+    function toast(msg) {
+      const c = document.getElementById('toasts');
+      const d = document.createElement('div');
+      d.className = 'toast'; d.textContent = msg;
+      c.appendChild(d);
+      setTimeout(() => d.remove(), 4200);
+    }
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    renderContent('appointments');
+  </script>
+</body>
+
+</html>

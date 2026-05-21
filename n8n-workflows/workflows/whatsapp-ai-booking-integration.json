@@ -1,0 +1,1043 @@
+{
+  "name": "Westhill Nails & Spa — WhatsApp AI Receptionist & Booking Integration",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ],
+        "options": {}
+      },
+      "id": "node-whatsapp-trigger",
+      "name": "WhatsApp Trigger",
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "position": [
+        -900,
+        200
+      ],
+      "webhookId": "whatsapp-incoming-webhook",
+      "typeVersion": 1,
+      "credentials": {
+        "whatsAppTriggerApi": {
+          "id": "ARtFfQkVsjwMeNQc",
+          "name": "WhatsApp OAuth Milind"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.messages[0].type }}",
+                    "rightValue": "text"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Supported"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEquals"
+                    },
+                    "leftValue": "={{ $json.messages[0].type }}",
+                    "rightValue": "text"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Not Supported"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-msg-type-switch",
+      "name": "Handle Message Types",
+      "type": "n8n-nodes-base.switch",
+      "position": [
+        -700,
+        200
+      ],
+      "typeVersion": 3.2
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "1093698253829228",
+        "recipientPhoneNumber": "={{ $('WhatsApp Trigger').item.json.messages[0].from }}",
+        "textBody": "Thanks for reaching out to Westhill Nails & Spa! 💅 I'm unable to process non-text messages at the moment. Please send your message as text so I can better assist you. You can also visit our website at westhillnails.ca or message us directly. Thank you!",
+        "additionalFields": {
+          "previewUrl": false
+        }
+      },
+      "id": "node-whatsapp-reply-unsupported",
+      "name": "Reply Non-Text Warning",
+      "type": "n8n-nodes-base.whatsApp",
+      "position": [
+        -450,
+        400
+      ],
+      "typeVersion": 1,
+      "webhookId": "whatsapp-reply-warning",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "m3O3H7hZRxW8O5Xm",
+          "name": "WhatsApp account Milind"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={{$env.GEMINI_API_KEY}}",
+        "method": "POST",
+        "sendHeaders": true,
+        "headers": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [\n    {\n      \"role\": \"user\",\n      \"parts\": [\n        {\n          \"text\": \"Classify the following incoming text message from a salon customer into exactly one of these categories: [general_inquiry, book_appointment, reschedule_appointment, check_appointment, cancel_appointment].\\n\\nDefinitions:\\n- general_inquiry: User asks about services, pricing, hours, location, policies, or standard conversation.\\n- book_appointment: User wants to schedule a new appointment or book a treatment.\\n- reschedule_appointment: User wants to change the date, time, or staff of an existing appointment.\\n- check_appointment: User wants to know details of their upcoming appointment.\\n- cancel_appointment: User explicitly asks to cancel, delete, or remove their booking.\\n\\nReturn ONLY a raw JSON string like this: { \\\"intent\\\": \\\"book_appointment\\\" } without markdown fences.\\n\\nCustomer Message: {{ $json.messages[0].text.body }}\"\n        }\n      ]\n    }\n  ],\n  \"generationConfig\": {\n    \"temperature\": 0.1,\n    \"responseMimeType\": \"application/json\"\n  }\n}"
+      },
+      "id": "node-intent-detection",
+      "name": "Intent Detection Node",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -450,
+        50
+      ],
+      "typeVersion": 4.1,
+      "notes": "Determines intent using Gemini 2.5 Flash under a structured JSON response schema."
+    },
+    {
+      "parameters": {
+        "jsCode": "const responseText = $input.first().json.candidates[0].content.parts[0].text;\ntry {\n  const parsed = JSON.parse(responseText);\n  return [{ json: { intent: parsed.intent || 'general_inquiry' } }];\n} catch (e) {\n  return [{ json: { intent: 'general_inquiry' } }];\n}"
+      },
+      "id": "node-parse-intent",
+      "name": "Parse Intent Response",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        -250,
+        50
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.intent }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "general_inquiry"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "General Q&A"
+            },
+            {
+              "conditions": {
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.intent }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "book_appointment"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Booking Flow"
+            },
+            {
+              "conditions": {
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.intent }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "reschedule_appointment"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Reschedule Flow"
+            },
+            {
+              "conditions": {
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.intent }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "cancel_appointment"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Cancellation Flow"
+            },
+            {
+              "conditions": {
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.intent }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "check_appointment"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Status Check Flow"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-intent-router",
+      "name": "Route by Intent",
+      "type": "n8n-nodes-base.switch",
+      "position": [
+        -50,
+        50
+      ],
+      "typeVersion": 3.2
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('WhatsApp Trigger').item.json.messages[0].text.body }}",
+        "options": {
+          "systemMessage": "You are a friendly and professional assistant for Westhill Nails & Spa (westhillnails.ca), a premier nail salon and spa located in Canada. Your goal is to help customers learn about our services, pricing, hours, location, and to answer questions about nail care. (Existing logic - isolated)."
+        }
+      },
+      "id": "node-existing-sales-agent",
+      "name": "AI Sales Agent (Q&A)",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        250,
+        -150
+      ],
+      "typeVersion": 1.6
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "1093698253829228",
+        "recipientPhoneNumber": "={{ $('WhatsApp Trigger').item.json.messages[0].from }}",
+        "textBody": "={{ $json.output }}",
+        "additionalFields": {
+          "previewUrl": false
+        }
+      },
+      "id": "node-whatsapp-reply-qa",
+      "name": "Reply Q&A Response",
+      "type": "n8n-nodes-base.whatsApp",
+      "position": [
+        500,
+        -150
+      ],
+      "typeVersion": 1,
+      "webhookId": "whatsapp-reply-qa",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "m3O3H7hZRxW8O5Xm",
+          "name": "WhatsApp account Milind"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={{$env.GEMINI_API_KEY}}",
+        "method": "POST",
+        "sendHeaders": true,
+        "headers": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [\n    {\n      \"role\": \"user\",\n      \"parts\": [\n        {\n          \"text\": \"Analyze the user request and extract any of these 8 appointment booking details. If not mentioned in the message, output null for that field:\\n1. fullName (Client full name)\\n2. serviceName (Name of service like Gel Manicure, Pedicure, Botox, Lip Filler etc)\\n3. preferredDate (Target booking date formatted as YYYY-MM-DD)\\n4. preferredTime (Target booking time formatted as HH:MM:SS or HH:MM)\\n5. paymentMethod (cash, card, online)\\n6. paymentStatus (pending or paid, defaults to pending)\\n7. notes (technician request or custom request)\\n\\nReturn ONLY a raw JSON string like this: { \\\"fullName\\\": null, \\\"serviceName\\\": \\\"Gel Manicure\\\", \\\"preferredDate\\\": \\\"2026-06-01\\\", \\\"preferredTime\\\": \\\"14:00\\\", \\\"paymentMethod\\\": null, \\\"paymentStatus\\\": \\\"pending\\\", \\\"notes\\\": null } without markdown blocks.\\n\\nCustomer Message: {{ $('WhatsApp Trigger').item.json.messages[0].text.body }}\"\n        }\n      ]\n    }\n  ],\n  \"generationConfig\": {\n    \"temperature\": 0.1,\n    \"responseMimeType\": \"application/json\"\n  }\n}"
+      },
+      "id": "node-extract-details",
+      "name": "Extract Booking Details",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        250,
+        50
+      ],
+      "typeVersion": 4.1,
+      "notes": "Extracts the 8 variables from the customer's raw WhatsApp text."
+    },
+    {
+      "parameters": {
+        "jsCode": "const phone = $node['WhatsApp Trigger'].json.messages[0].from;\nconst rawExtract = JSON.parse($input.first().json.candidates[0].content.parts[0].text);\n\n// We access n8n static data representing our long-term session cache for each phone number\nconst staticData = getWorkflowStaticData('global');\nif (!staticData.sessions) staticData.sessions = {};\nif (!staticData.sessions[phone]) {\n  staticData.sessions[phone] = {\n    fullName: null,\n    phoneNumber: phone,\n    serviceName: null,\n    preferredDate: null,\n    preferredTime: null,\n    paymentMethod: 'cash',\n    paymentStatus: 'pending',\n    notes: null\n  };\n}\n\nconst session = staticData.sessions[phone];\n\n// Merge newly extracted variables only if they are not null\nif (rawExtract.fullName) session.fullName = rawExtract.fullName;\nif (rawExtract.serviceName) session.serviceName = rawExtract.serviceName;\nif (rawExtract.preferredDate) session.preferredDate = rawExtract.preferredDate;\nif (rawExtract.preferredTime) session.preferredTime = rawExtract.preferredTime;\nif (rawExtract.paymentMethod) session.paymentMethod = rawExtract.paymentMethod;\nif (rawExtract.paymentStatus) session.paymentStatus = rawExtract.paymentStatus;\nif (rawExtract.notes) session.notes = rawExtract.notes;\n\nreturn [{ json: { session, phone } }];"
+      },
+      "id": "node-merge-state",
+      "name": "Merge State Node",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        450,
+        50
+      ],
+      "typeVersion": 2,
+      "notes": "Maintains conversation memory state machines in n8n workflow static variables."
+    },
+    {
+      "parameters": {
+        "jsCode": "const { session, phone } = $input.first().json;\n\n// Checking the missing fields sequentially\nlet missingField = null;\nlet promptMessage = '';\n\nif (!session.fullName) {\n  missingField = 'fullName';\n  promptMessage = \"Thank you! I'd love to help you book an appointment. Could you please share your full name first?\";\n} else if (!session.serviceName) {\n  missingField = 'serviceName';\n  promptMessage = `Hi ${session.fullName}! What treatment or service would you like to book? (We offer Gel Manicures, Luxury Pedicures, Gel Extensions, Botox sessions, and Lip Fillers!)`;\n} else if (!session.preferredDate) {\n  missingField = 'preferredDate';\n  promptMessage = `Got it! A ${session.serviceName}. What date would you prefer for your visit? (e.g. YYYY-MM-DD, tomorrow, or this Saturday)`;\n} else if (!session.preferredTime) {\n  missingField = 'preferredTime';\n  promptMessage = \"And what time fits your schedule? Mon-Sat 9AM-7PM, Sun 10AM-5PM. (e.g., 2:30 PM, 11:00 AM)\";\n}\n\nconst isComplete = !missingField;\n\nreturn [{ json: { isComplete, missingField, promptMessage, session, phone } }];"
+      },
+      "id": "node-questionnaire-state",
+      "name": "Collect User Details Node",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        650,
+        50
+      ],
+      "typeVersion": 2,
+      "notes": "State machine that evaluates variables. Prompts next question sequentially if data is missing."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.isComplete }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "node-complete-switch",
+      "name": "Is Questionnaire Complete?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        850,
+        50
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "1093698253829228",
+        "recipientPhoneNumber": "={{ $json.phone }}",
+        "textBody": "={{ $json.promptMessage }}",
+        "additionalFields": {
+          "previewUrl": false
+        }
+      },
+      "id": "node-reply-question",
+      "name": "Reply Next Question",
+      "type": "n8n-nodes-base.whatsApp",
+      "position": [
+        1050,
+        -50
+      ],
+      "typeVersion": 1,
+      "webhookId": "whatsapp-reply-question",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "m3O3H7hZRxW8O5Xm",
+          "name": "WhatsApp account Milind"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://your-express-backend.onrender.com/api/clients",
+        "method": "POST",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "oAuth2Api",
+        "sendHeaders": true,
+        "headers": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.BACKEND_JWT_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"fullName\": \"{{ $json.session.fullName }}\",\n  \"phoneNumber\": \"{{ $json.phone }}\",\n  \"bookingSource\": \"whatsapp_ai\"\n}"
+      },
+      "id": "node-api-sync-client",
+      "name": "API Sync Client Profile",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1050,
+        150
+      ],
+      "typeVersion": 4.1,
+      "notes": "Syncs the client record. Gracefully returns client profile if returning or inserts if new."
+    },
+    {
+      "parameters": {
+        "url": "https://your-express-backend.onrender.com/api/appointments",
+        "method": "POST",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "oAuth2Api",
+        "sendHeaders": true,
+        "headers": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.BACKEND_JWT_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"clientId\": \"{{ $json.data.id }}\",\n  \"serviceName\": \"{{ $('Collect User Details Node').item.json.session.serviceName }}\",\n  \"appointmentDate\": \"{{ $('Collect User Details Node').item.json.session.preferredDate }}\",\n  \"appointmentTime\": \"{{ $('Collect User Details Node').item.json.session.preferredTime }}\",\n  \"paymentMethod\": \"{{ $('Collect User Details Node').item.json.session.paymentMethod }}\",\n  \"paymentStatus\": \"{{ $('Collect User Details Node').item.json.session.paymentStatus }}\",\n  \"notes\": \"{{ $('Collect User Details Node').item.json.session.notes || '' }}\",\n  \"bookingSource\": \"whatsapp_ai\"\n}"
+      },
+      "id": "node-api-create-booking",
+      "name": "API Register Booking",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1250,
+        150
+      ],
+      "typeVersion": 4.1,
+      "notes": "Creates booking slot. Backend checks working hours, calendars, conflicts, syncs Google Calendar & audits."
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.status }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "success"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Success"
+            },
+            {
+              "conditions": {
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.status }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "conflict"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Collision Conflict"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-api-status-router",
+      "name": "Check API Outcome",
+      "type": "n8n-nodes-base.switch",
+      "position": [
+        1450,
+        150
+      ],
+      "typeVersion": 3.2
+    },
+    {
+      "parameters": {
+        "jsCode": "const phone = $node['Collect User Details Node'].json.phone;\nconst staticData = getWorkflowStaticData('global');\ndelete staticData.sessions[phone]; // Empty session state since booking finished!\nreturn [{ json: $input.first().json }];"
+      },
+      "id": "node-reset-booking-session",
+      "name": "Reset Booking State",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1650,
+        50
+      ],
+      "typeVersion": 2,
+      "notes": "Resets memory buffer for phone number upon booking success."
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "1093698253829228",
+        "recipientPhoneNumber": "={{ $('Collect User Details Node').item.json.phone }}",
+        "textBody": "=🎉 Congratulations! Your appointment at Westhill Nails & Spa is confirmed! ✨\\n\\n💅 Service: {{ $json.data.service_name }}\\n📅 Date: {{ $json.data.appointment_date }}\\n🕒 Time: {{ $json.data.appointment_time }}\\n💳 Payment: Cash (Pending)\\n📍 Address: Westhill Nails Salon\\n\\nSee you soon! 🌸",
+        "additionalFields": {
+          "previewUrl": false
+        }
+      },
+      "id": "node-reply-booking-success",
+      "name": "Reply Confirm Booking",
+      "type": "n8n-nodes-base.whatsApp",
+      "position": [
+        1850,
+        50
+      ],
+      "typeVersion": 1,
+      "webhookId": "whatsapp-confirm-booking",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "m3O3H7hZRxW8O5Xm",
+          "name": "WhatsApp account Milind"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const { message, suggestions } = $input.first().json;\nconst suggestionsList = suggestions && suggestions.length > 0 \n  ? suggestions.map(time => `• ${time}`).join('\\n')\n  : 'Please pick another time.';\nconst text = `⚠️ I'm sorry, that slot is already booked.\\n\\nWould you prefer any of these 3 alternative times instead?\\n${suggestionsList}\\n\\nSimply type the preferred time to complete your booking! 🌸`;\nreturn [{ json: { text } }];"
+      },
+      "id": "node-format-suggestions",
+      "name": "Format Time Suggestions",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1650,
+        250
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "1093698253829228",
+        "recipientPhoneNumber": "={{ $('Collect User Details Node').item.json.phone }}",
+        "textBody": "={{ $json.text }}",
+        "additionalFields": {
+          "previewUrl": false
+        }
+      },
+      "id": "node-reply-suggestions",
+      "name": "Reply Suggestions",
+      "type": "n8n-nodes-base.whatsApp",
+      "position": [
+        1850,
+        250
+      ],
+      "typeVersion": 1,
+      "webhookId": "whatsapp-reply-suggestions",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "m3O3H7hZRxW8O5Xm",
+          "name": "WhatsApp account Milind"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const phone = $node['WhatsApp Trigger'].json.messages[0].from;\nconst staticData = getWorkflowStaticData('global');\n\n// Wipe state completely when cancellation request is verified\nif (staticData.sessions && staticData.sessions[phone]) {\n  delete staticData.sessions[phone];\n}\nreturn [{ json: { phone } }];"
+      },
+      "id": "node-reset-cancel-state",
+      "name": "Reset State on Cancel",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        250,
+        450
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "url": "https://your-express-backend.onrender.com/api/appointments",
+        "method": "GET",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "oAuth2Api",
+        "sendHeaders": true,
+        "headers": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.BACKEND_JWT_TOKEN}}"
+            }
+          ]
+        },
+        "sendQueryParameters": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "scheduled"
+            }
+          ]
+        }
+      },
+      "id": "node-api-get-active-bookings",
+      "name": "API Check Upcoming Bookings",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        450,
+        450
+      ],
+      "typeVersion": 4.1,
+      "notes": "Scans for existing active appointments to identify target cancellation."
+    },
+    {
+      "parameters": {
+        "jsCode": "const phone = $node['Reset State on Cancel'].json.phone;\nconst appointments = $input.first().json.data || [];\n\n// Find active appointment matching client phone\nconst targetApp = appointments.find(app => app.clients && app.clients.phone_number === phone);\n\nreturn [{ json: { phone, appointmentFound: !!targetApp, appointmentId: targetApp ? targetApp.id : null, serviceName: targetApp ? targetApp.service_name : '' } }];"
+      },
+      "id": "node-find-booking",
+      "name": "Identify Target Booking",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        650,
+        450
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.appointmentFound }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "node-has-booking-switch",
+      "name": "Found Booking?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        850,
+        450
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "url": "=https://your-express-backend.onrender.com/api/appointments/{{ $json.appointmentId }}/cancel",
+        "method": "PUT",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "oAuth2Api",
+        "sendHeaders": true,
+        "headers": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.BACKEND_JWT_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"reason\": \"Cancelled via WhatsApp AI Receptionist\",\n  \"changedBy\": \"whatsapp_ai\"\n}"
+      },
+      "id": "node-api-cancel-booking",
+      "name": "API Trigger Cancel",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1050,
+        450
+      ],
+      "typeVersion": 4.1,
+      "notes": "Pushes status update and cancels calendar event automatically in one step."
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "1093698253829228",
+        "recipientPhoneNumber": "={{ $('Reset State on Cancel').item.json.phone }}",
+        "textBody": "🌸 Done! Your upcoming appointment has been successfully cancelled. Whenever you're ready to book with us again, just type 'book' and I'll assist you! — Westhill Nails & Spa",
+        "additionalFields": {
+          "previewUrl": false
+        }
+      },
+      "id": "node-reply-cancel-success",
+      "name": "Reply Cancel Confirm",
+      "type": "n8n-nodes-base.whatsApp",
+      "position": [
+        1250,
+        450
+      ],
+      "typeVersion": 1,
+      "webhookId": "whatsapp-cancel-confirm",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "m3O3H7hZRxW8O5Xm",
+          "name": "WhatsApp account Milind"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "1093698253829228",
+        "recipientPhoneNumber": "={{ $json.phone }}",
+        "textBody": "🌸 I couldn't locate any active upcoming appointments under your phone number. If you need to make a new booking, just let me know! — Westhill Nails & Spa",
+        "additionalFields": {
+          "previewUrl": false
+        }
+      },
+      "id": "node-reply-cancel-not-found",
+      "name": "Reply Cancel Missing",
+      "type": "n8n-nodes-base.whatsApp",
+      "position": [
+        1050,
+        600
+      ],
+      "typeVersion": 1,
+      "webhookId": "whatsapp-cancel-missing",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "m3O3H7hZRxW8O5Xm",
+          "name": "WhatsApp account Milind"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "WhatsApp Trigger": {
+      "main": [
+        [
+          {
+            "node": "Handle Message Types",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle Message Types": {
+      "main": [
+        [
+          {
+            "node": "Intent Detection Node",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reply Non-Text Warning",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Intent Detection Node": {
+      "main": [
+        [
+          {
+            "node": "Parse Intent Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Intent Response": {
+      "main": [
+        [
+          {
+            "node": "Route by Intent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Intent": {
+      "main": [
+        [
+          {
+            "node": "AI Sales Agent (Q&A)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract Booking Details",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract Booking Details",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reset State on Cancel",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reset State on Cancel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Sales Agent (Q&A)": {
+      "main": [
+        [
+          {
+            "node": "Reply Q&A Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Booking Details": {
+      "main": [
+        [
+          {
+            "node": "Merge State Node",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge State Node": {
+      "main": [
+        [
+          {
+            "node": "Collect User Details Node",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect User Details Node": {
+      "main": [
+        [
+          {
+            "node": "Is Questionnaire Complete?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Questionnaire Complete?": {
+      "main": [
+        [
+          {
+            "node": "API Sync Client Profile",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reply Next Question",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API Sync Client Profile": {
+      "main": [
+        [
+          {
+            "node": "API Register Booking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API Register Booking": {
+      "main": [
+        [
+          {
+            "node": "Check API Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check API Outcome": {
+      "main": [
+        [
+          {
+            "node": "Reset Booking State",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Time Suggestions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reset Booking State": {
+      "main": [
+        [
+          {
+            "node": "Reply Confirm Booking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Time Suggestions": {
+      "main": [
+        [
+          {
+            "node": "Reply Suggestions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reset State on Cancel": {
+      "main": [
+        [
+          {
+            "node": "API Check Upcoming Bookings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API Check Upcoming Bookings": {
+      "main": [
+        [
+          {
+            "node": "Identify Target Booking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Identify Target Booking": {
+      "main": [
+        [
+          {
+            "node": "Found Booking?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Found Booking?", {
+      "main": [
+        [
+          {
+            "node": "API Trigger Cancel",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reply Cancel Missing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API Trigger Cancel": {
+      "main": [
+        [
+          {
+            "node": "Reply Cancel Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

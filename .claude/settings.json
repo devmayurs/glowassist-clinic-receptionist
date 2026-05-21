@@ -1,0 +1,80 @@
+{
+  "version": "1.0",
+  "permissions": {
+    "allow": [
+      "Bash: npm install",
+      "Bash: npm run build",
+      "Bash: npm test",
+      "Bash: npx prisma migrate dev",
+      "Bash: npx prisma generate",
+      "Bash: npx prisma studio",
+      "Bash: docker-compose up",
+      "Bash: docker-compose down",
+      "Bash: docker-compose logs",
+      "Bash: git status",
+      "Bash: git diff",
+      "Bash: git log",
+      "Bash: mkdir -p",
+      "Bash: ls",
+      "Bash: cat",
+      "Bash: curl",
+      "Bash: ngrok http"
+    ],
+    "deny": [
+      "Bash: rm -rf /",
+      "Bash: git push --force",
+      "Bash: DROP DATABASE",
+      "Bash: *password*",
+      "Bash: *secret*"
+    ],
+    "requireConfirmation": [
+      "Bash: git commit",
+      "Bash: git push",
+      "Bash: docker-compose down",
+      "Bash: rm -rf"
+    ]
+  },
+  "safety": {
+    "blockDangerousCommands": true,
+    "validateFileWrites": true,
+    "redactSecretsInOutput": true,
+    "requireConfirmationForDestructive": true
+  },
+  "formatting": {
+    "autoFormat": true,
+    "formatter": "prettier",
+    "lintOnSave": true,
+    "linter": "eslint"
+  },
+  "testing": {
+    "autoRunTests": false,
+    "coverageThreshold": 80,
+    "testCommand": "npm test",
+    "watchMode": false
+  },
+  "fileAccess": {
+    "restrictToProjectRoot": true,
+    "allowDotFiles": true,
+    "blockedPatterns": [
+      "*.env",
+      "*.pem",
+      "*secret*",
+      "*password*"
+    ]
+  },
+  "agentExecution": {
+    "allowBackgroundAgents": true,
+    "maxConcurrentAgents": 3,
+    "agentTimeoutMs": 300000
+  },
+  "hooks": {
+    "preCommit": ".claude/hooks/pre-commit.sh",
+    "postCommand": ".claude/hooks/post-command.sh"
+  },
+  "logging": {
+    "level": "info",
+    "file": ".claude/claude-logs.json",
+    "maxFileSizeMB": 10,
+    "rotateDaily": true
+  }
+}

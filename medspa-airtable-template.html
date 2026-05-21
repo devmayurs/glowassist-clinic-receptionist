@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GlowAssist AI — Med Spa Airtable Template</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0E0A08;
+  --s1: #161009;
+  --s2: #1E1610;
+  --s3: #26201A;
+  --border: #352A20;
+  --rose: #C9847A;
+  --rose-d: rgba(201,132,122,0.15);
+  --gold: #B8965A;
+  --gold-d: rgba(184,150,90,0.15);
+  --sage: #7A9E7E;
+  --sage-d: rgba(122,158,126,0.15);
+  --plum: #9B6B8A;
+  --plum-d: rgba(155,107,138,0.15);
+  --blue: #6B9CB8;
+  --blue-d: rgba(107,156,184,0.15);
+  --text: #F0EDE8;
+  --muted: #8A7060;
+  --dim: #4A3828;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Jost',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 50%, rgba(201,132,122,0.04) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(184,150,90,0.04) 0%, transparent 50%);pointer-events:none;z-index:0}
+
+.wrap{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:0 2rem 4rem}
+
+.hero{padding:3rem 0 2rem;border-bottom:1px solid var(--border);margin-bottom:2rem;position:relative}
+.hero::after{content:'';position:absolute;bottom:-1px;left:0;width:160px;height:1px;background:linear-gradient(90deg,var(--rose),transparent)}
+.badge{display:inline-flex;align-items:center;gap:7px;background:var(--rose-d);border:1px solid rgba(201,132,122,0.25);border-radius:20px;padding:5px 14px;font-size:0.68rem;color:var(--rose);font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:1rem}
+.bdot{width:5px;height:5px;background:var(--rose);border-radius:50%;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,4vw,2.8rem);font-weight:400;font-style:italic;line-height:1.15;margin-bottom:.75rem;letter-spacing:-0.5px}
+h1 strong{font-style:normal;font-weight:600;color:var(--rose)}
+.subtitle{color:var(--muted);font-size:.88rem;line-height:1.7;max-width:560px;margin-bottom:1.5rem}
+.actions{display:flex;gap:.75rem;flex-wrap:wrap}
+.btn{padding:.5rem 1.2rem;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;border:none;font-family:'Jost',sans-serif;transition:all .2s;letter-spacing:.5px}
+.btn-rose{background:var(--rose);color:#0E0A08}
+.btn-rose:hover{background:#D4948A;transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--rose);border:1px solid rgba(201,132,122,0.35)}
+.btn-ghost:hover{background:var(--rose-d)}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.85rem;margin-bottom:2rem}
+.stat{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:1rem 1.1rem;position:relative;overflow:hidden}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:1px}
+.stat.r::before{background:var(--rose)}.stat.g::before{background:var(--gold)}.stat.s::before{background:var(--sage)}.stat.p::before{background:var(--plum)}
+.snum{font-family:'Cormorant Garamond',serif;font-size:1.9rem;font-weight:600;line-height:1;margin-bottom:3px}
+.stat.r .snum{color:var(--rose)}.stat.g .snum{color:var(--gold)}.stat.s .snum{color:var(--sage)}.stat.p .snum{color:var(--plum)}
+.slbl{font-size:.65rem;color:var(--muted);font-weight:500;letter-spacing:.5px}
+
+.sec-title{font-size:.62rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:1rem;display:flex;align-items:center;gap:10px}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--border)}
+
+.tcard{background:var(--s1);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:1.25rem;transition:border-color .2s}
+.tcard:hover{border-color:rgba(201,132,122,0.2)}
+.thead{padding:1.15rem 1.4rem;display:flex;align-items:center;gap:11px;border-bottom:1px solid var(--border);cursor:pointer;user-select:none}
+.ticon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.05rem;flex-shrink:0}
+.tinfo{flex:1}
+.tname{font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:600;color:var(--text);margin-bottom:1px}
+.tdesc{font-size:.72rem;color:var(--muted)}
+.tmeta{display:flex;align-items:center;gap:8px}
+.mpill{padding:2px 9px;border-radius:20px;font-size:.65rem;font-weight:600}
+.xicon{color:var(--dim);font-size:.75rem;transition:transform .2s}
+.tcard.open .xicon{transform:rotate(180deg)}
+
+.ftable{width:100%;border-collapse:collapse;overflow-x:auto;display:block}
+.ftable th{background:var(--s2);font-size:.62rem;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--dim);padding:.6rem 1.2rem;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+.ftable td{padding:.72rem 1.2rem;font-size:.78rem;border-bottom:1px solid var(--border);vertical-align:middle}
+.ftable tr:last-child td{border-bottom:none}
+.ftable tr:hover td{background:var(--s2)}
+.fname{font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px}
+.fprim{font-size:.58rem;background:var(--rose-d);color:var(--rose);padding:1px 6px;border-radius:4px;font-weight:700}
+.fkey{font-size:.58rem;background:var(--gold-d);color:var(--gold);padding:1px 6px;border-radius:4px;font-weight:700}
+.ftype{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:5px;font-size:.68rem;font-weight:600;white-space:nowrap}
+.ft-text{background:#1A2030;color:var(--blue)}.ft-phone{background:#1A2030;color:var(--blue)}.ft-email{background:#1A2030;color:var(--blue)}.ft-date{background:#201A30;color:var(--plum)}.ft-num{background:#30251A;color:var(--gold)}.ft-sel{background:#1A3020;color:var(--sage)}.ft-check{background:#301A1A;color:var(--rose)}.ft-long{background:#1A2030;color:#93C5FD}.ft-auto{background:#1A3020;color:var(--sage)}.ft-created{background:#302A1A;color:var(--gold)}.ft-rating{background:#302A1A;color:var(--gold)}.ft-currency{background:#302A1A;color:var(--gold)}
+.opts{display:flex;gap:4px;flex-wrap:wrap}
+.opt{padding:2px 7px;border-radius:4px;font-size:.62rem;font-weight:600}
+.sval{font-size:.72rem;color:var(--muted);font-style:italic;max-width:190px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fnote{font-size:.68rem;color:var(--dim);line-height:1.45;max-width:190px}
+
+.samples{border-top:1px solid var(--border);padding:1rem 1.4rem;background:var(--s2)}
+.slabel{font-size:.6rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin-bottom:.7rem}
+.srows{display:flex;flex-direction:column;gap:6px}
+.srow{display:flex;gap:8px;align-items:center;font-size:.72rem;color:var(--muted);padding:7px 10px;background:var(--s3);border-radius:8px;border:1px solid var(--border)}
+.snum-badge{width:20px;height:20px;background:var(--rose-d);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:700;color:var(--rose);flex-shrink:0}
+.scells{display:flex;gap:16px;flex-wrap:wrap;flex:1}
+.sc{display:flex;flex-direction:column;gap:1px}
+.ck{font-size:.58rem;color:var(--dim);font-weight:600}
+.cv{color:var(--text);font-size:.72rem}
+
+.setup-card{background:var(--s1);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:1.5rem}
+.setup-head{padding:1.15rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.setup-head h2{font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:600}
+.steps{padding:1.2rem 1.4rem;display:flex;flex-direction:column}
+.step{display:flex;gap:13px;padding:.85rem 0;border-bottom:1px solid var(--border);opacity:0;animation:fadeup .4s ease forwards}
+.step:last-child{border-bottom:none}
+@keyframes fadeup{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.sn{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;font-family:'Cormorant Garamond',serif;flex-shrink:0;margin-top:1px}
+.sc2{flex:1}
+.stitle{font-weight:600;font-size:.85rem;margin-bottom:2px;color:var(--text)}
+.sdesc{font-size:.75rem;color:var(--muted);line-height:1.6}
+.scode{margin-top:6px;background:var(--s3);border:1px solid var(--border);border-radius:7px;padding:7px 11px;font-family:'Courier New',monospace;font-size:.72rem;color:var(--rose);white-space:pre-wrap;word-break:break-all}
+
+.tips{display:grid;grid-template-columns:1fr 1fr;gap:.85rem;margin-bottom:1.5rem}
+.tip{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1.2rem}
+.tico{font-size:1.3rem;margin-bottom:7px}
+.ttitle{font-weight:600;font-size:.83rem;margin-bottom:3px;color:var(--text)}
+.ttext{font-size:.74rem;color:var(--muted);line-height:1.6}
+
+.hidden{display:none}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+@media(max-width:700px){.stats{grid-template-columns:1fr 1fr}.tips{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="hero">
+  <div class="badge"><div class="bdot"></div>Airtable Base Template</div>
+  <h1><em>GlowAssist</em> <strong>AI</strong><br>Med Spa Database</h1>
+  <p class="subtitle">Complete Airtable base for your med spa AI receptionist. 5 tables, 70+ fields, treatment-specific logic, membership tracking, and revenue monitoring — all ready to build.</p>
+  <div class="actions">
+    <button class="btn btn-rose" onclick="expandAll()">▼ Expand All Tables</button>
+    <button class="btn btn-ghost" onclick="collapseAll()">▲ Collapse All</button>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat r"><div class="snum">5</div><div class="slbl">Tables</div></div>
+  <div class="stat g"><div class="snum">71</div><div class="slbl">Total Fields</div></div>
+  <div class="stat s"><div class="snum">6</div><div class="slbl">Automations</div></div>
+  <div class="stat p"><div class="snum">12</div><div class="slbl">Services Tracked</div></div>
+</div>
+
+<div class="sec-title">Database Tables</div>
+
+<!-- TABLE 1: CLIENTS -->
+<div class="tcard open" id="c1">
+  <div class="thead" onclick="tog('c1')">
+    <div class="ticon" style="background:var(--rose-d)">👤</div>
+    <div class="tinfo">
+      <div class="tname">Clients</div>
+      <div class="tdesc">Master client registry — every client Aria has ever spoken with</div>
+    </div>
+    <div class="tmeta">
+      <span class="mpill" style="background:var(--rose-d);color:var(--rose)">18 fields</span>
+      <span class="mpill" style="background:var(--s3);color:var(--muted)">Primary</span>
+      <span class="xicon">▼</span>
+    </div>
+  </div>
+  <div style="overflow-x:auto">
+  <table class="ftable">
+    <thead><tr><th>Field Name</th><th>Type</th><th>Sample Value</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><div class="fname">Client Name <span class="fprim">PRIMARY</span></div></td><td><span class="ftype ft-text">🔤 Text</span></td><td class="sval">Sophia Laurent</td><td class="fnote">Extracted from call by AI</td></tr>
+      <tr><td><div class="fname">Phone <span class="fkey">LOOKUP</span></div></td><td><span class="ftype ft-phone">📱 Phone</span></td><td class="sval">(555) 234-7890</td><td class="fnote">Used to find returning clients</td></tr>
+      <tr><td><div class="fname">Email</div></td><td><span class="ftype ft-email">✉️ Email</span></td><td class="sval">sophia@email.com</td><td class="fnote">For email marketing</td></tr>
+      <tr><td><div class="fname">Date of Birth</div></td><td><span class="ftype ft-date">📅 Date</span></td><td class="sval">1988-06-14</td><td class="fnote">For birthday offers</td></tr>
+      <tr><td><div class="fname">Client Status</div></td><td><span class="ftype ft-sel">▾ Select</span></td><td><div class="opts"><span class="opt" style="background:var(--sage-d);color:var(--sage)">Active</span><span class="opt" style="background:var(--plum-d);color:var(--plum)">VIP</span><span class="opt" style="background:var(--gold-d);color:var(--gold)">Lapsed</span><span class="opt" style="background:var(--rose-d);color:var(--rose)">New</span></div></td><td class="fnote">Updated automatically</td></tr>
+      <tr><td><div class="fname">Membership</div></td><td><span class="ftype ft-sel">▾ Select</span></td><td><div class="opts"><span class="opt" style="background:var(--rose-d);color:var(--rose)">Radiance</span><span class="opt" style="background:var(--blue-d);color:var(--blue)">Botox Club</span><span class="opt" style="background:var(--sage-d);color:var(--sage)">None</span></div></td><td class="fnote">Current membership tier</td></tr>
+      <tr><td><div class="fname">Preferred Provider</div></td><td><span class="ftype ft-sel">▾ Select</span></td><td><div class="opts"><span class="opt" style="background:var(--rose-d);color:var(--rose)">Dr. Reeves</span><span class="opt" style="background:var(--blue-d);color:var(--blue)">Dr. Chen</span><span class="opt" style="background:var(--sage-d);color:var(--sage)">Maya</span></div></td><td class="fnote">Remembered for future bookings</td></tr>
+      <tr><td><div class="fname">Preferred Treatment</div></td><td><span class="ftype ft-sel">▾ Select</span></td><td><div class="opts"><span class="opt" style="background:var(--rose-d);color:var(--rose)">Botox</span><span class="opt" style="background:var(--gold-d);color:var(--gold)">HydraFacial</span><span class="opt" style="background:var(--plum-d);color:var(--plum)">Filler</span><span class="opt" style="background:var(--sage-d);color:var(--sage)">Laser</span></div></td><td class="fnote">Most booked treatment</td></tr>
+      <tr><td><div class="fname">Skin Concerns</div></td><td><span class="ftype ft-long">📝 Long Text</span></td><td class="sval">Fine lines, hyperpigmentation</td><td class="fnote">Collected from consultation</td></tr>
+      <tr><td><div class="fname">Allergies</div></td><td><span class="ftype ft-long">📝 Long Text</span></td><td class="sval">None known</td><td class="fnote">Medical safety — critical</td></tr>
+      <tr><td><div class="fname">Source</div></td><td><span class="ftype ft-sel">▾ Select</span></td><td><div class="opts"><span class="opt" style="background:var(--rose-d);color:var(--rose)">AI Call</span><span class="opt" style="background:var(--gold-d);color:var(--gold)">Referral</span><span class="opt" style="background:var(--blue-d);color:var(--blue)">Instagram</span><span class="opt" style="background:var(--sage-d);color:var(--sage)">Walk-in</span></div></td><td class="fnote">Marketing attribution</td></tr>
+      <tr><td><div class="fname">First Visit Date</div></td><td><span class="ftype ft-date">📅 Date</span></td><td class="sval">2024-08-15</td><td class="fnote">Auto-set on record creation</td></tr>
+      <tr><td><div class="fname">Last Call Date</div></td><td><span class="ftype ft-date">📅 Date</span></td><td class="sval">2025-04-10</td><td class="fnote">Updated after every call</td></tr>
+      <tr><td><div class="fname">Last Service</div></td><td><span class="ftype ft-text">🔤 Text</span></td><td class="sval">Botox — Forehead</td><td class="fnote">Most recent treatment</td></tr>
+      <tr><td><div class="fname">Visit Count</div></td><td><span class="ftype ft-num">🔢 Number</span></td><td class="sval">8</td><td class="fnote">n8n increments each call</td></tr>
+      <tr><td><div class="fname">Total Spent</div></td><td><span class="ftype ft-currency">$ Currency</span></td><td class="sval">$3,840</td><td class="fnote">Lifetime value tracking</td></tr>
+      <tr><td><div class="fname">Package Interest</div></td><td><span class="ftype ft-check">☑ Checkbox</span></td><td class="sval">✓ TRUE</td><td class="fnote">Expressed interest in membership</td></tr>
+      <tr><td><div class="fname">Record Created</div></td><td><span class="ftype ft-created">⏱ Created Time</span></td><td class="sval">Auto</td><td class="fnote">Automatic — do not edit</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="samples">
+    <div class="slabel">Sample Data</div>
+    <div class="srows">
+      <div class="srow"><div class="snum-badge">1</div><div class="scells">
+        <div class="sc"><div class="ck">Name</div><div class="cv">Sophia Laurent</div></div>
+        <div class="sc"><div class="ck">Status</div><div class="cv" style="color:var(--plum)">♛ VIP</div></div>
+        <div class="sc"><div class="ck">Membership</div><div class="cv">Radiance</div></div>
+        <div class="sc"><div class="ck">Visits</div><div class="cv">8</div></div>
+        <div class="sc"><div class="ck">Total Spent</div><div class="cv" style="color:var(--gold)">$3,840</div></div>
+      </div></div>
+      <div class="srow"><div class="snum-badge">2</div><div class="scells">
+        <div class="sc"><div class="ck">Name</div><div class="cv">Isabella Park</div></div>
+        <div class="sc"><div class="ck">Status</div><div class="cv" style="color:var(--sage)">Active</div></div>
+        <div class="sc"><div class="ck">Membership</div><div class="cv">Botox Club</div></div>
+        <div class="sc"><div class="ck">Visits</div><div class="cv">3</div></div>
+        <div class="sc"><div class="ck">Total Spent</div><div class="cv" style="color:var(--gold)">$890</div></div>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<!-- TABLE 2: APPOINTMENTS -->
+<div class="tcard" id="c2">
+  <div class="thead" onclick="tog('c2')">
+    <div class="ticon" style="background:var(--gold-d)">📅</div>
+    <div class="tinfo">
+      <div class="tname">Appointments</div>
+      <div class="tdesc">Every booking with treatment, provider, price, status and prep tracking</div>
+    </div>
+    <div class="tmeta">
+      <span class="mpill" style="background:var(--gold-d);color:var(--gold)">20 fields</span>
+      <span class="mpill" style="background:var(--s3);color:var(--muted)">Core</span>
+      <span class="xicon">▼</span>
+    </div>
+  </div>
+  <div style="overflow-x:auto;display:none" class="table-body">
+  <table class="ftable">
+    <thead><tr><th>Field Name</th><th>Type</th><th>Sample Value</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><div class="fname">Appt ID <span class="fprim">PRIMARY</span></div></td><td><span class="ftype ft-auto">🔢 Auto Number</span></td><td class="sval">SPA-0087</td><td class="fnote">Auto-generated</td></tr>
+      <tr><td><div class="fname">Client Name</div></td><td><span class="ftype ft-text">🔤 Text</span></td><td class="sval">Sophia Laurent</td><td class="fnote">From AI extraction</td></tr>
+      <tr><td><div class="fname">Phone</div></td><td><span class="ftype ft-phone">📱 Phone</span></td><td class="sval">(555) 234-7890</td><td class="fnote">For reminders/contact</td></tr>
+      <tr><td><div class="fname">Appointment Date</div></td><td><span class="ftype ft-date">📅 Date</span></td><td class="sval">2025-04-15</td><td class="fnote"></td></tr>
+      <tr><td><div class="fname">Appointment Time</div></td><td><span class="ftype ft-text">🔤 Text</span></td><td class="sval">10:30 AM</td><td class="fnote"></td></tr>
+      <tr><td><div class="fname">Treatment</div></td><td><span class="ftype ft-sel">▾ Select</span></td><td><div class="opts"><span class="opt" style="background:var(--rose-d);color:var(--rose)">Botox</span><span class="opt" style="background:var(--plum-d);color:var(--plum)">Filler</span><span class="opt" style="background:var(--gold-d);color:var(--gold)">HydraFacial</span><span class="opt" style="background:var(--blue-d);color:var(--blue)">Laser</span><span class="opt" style="background:var(--sage-d);color:var(--sage)">Chemical Peel</span></div></td><td class="fnote">12 treatment options</td></tr>
+      <tr><td><div class="fname">Provider</div></td><td><span class="ftype ft-sel">▾ Select</span></td><td><div class="opts"><span class="opt" style="background:var(--rose-d);color:var(--rose)">Dr. Reeves</span><span class="opt" style="background:var(--blue-d);color:var(--blue)">Dr. Chen</span><span class="opt" style="background:var(--sage-d);color:var(--sage)">Esthetician Maya</span></div></td><td class="fnote">Auto-assigned by service type</td></tr>
+      <tr><td><div class="fname">Duration (mins)</div></td><td><span class="ftype ft-num">🔢 Number</span></td><td class="sval">45</td><td class="fnote">n8n sets based on treatment</td></tr>
+      <tr><td><div class="fname">Estimated Price</div></td><td><span class="ftype ft-currency">$ Currency</span></td><td class="sval">$450</td><td class="fnote">Service price for revenue tracking</td></tr>
+      <tr><td><div class="fname">Status</div></td><td><span class="ftype ft-sel">▾ Select</span></td><td><div class="opts"><span class="opt" style="background:var(--sage-d);color:var(--sage)">Confirmed</span><span class="opt" style="background:var(--gold-d);color:var(--gold)">Pending</span><span class="opt" style="background:var(--rose-d);color:var(--rose)">Completed</span><span class="opt" style="background:var(--plum-d);color:var(--plum)">No-Show</span><span class="opt" style="background:#2A2020;color:#999">Cancelled</span></div></td><td class="fnote">Updated by n8n or staff</td></tr>
+      <tr><td><div class="fname">Booked By</div></td><td><span class="ftype ft-sel">▾ Select</span></td><td><div class="opts"><span class="opt" style="background:var(--rose-d);color:var(--rose)">AI Agent</span><span class="opt" style="background:var(--blue-d);color:var(--blue)">Human</span></div></td><td class="fnote">Track AI vs human bookings</td></tr>
+      <tr><td><div class="fname">Package Used</div></td><td><span class="ftype ft-check">☑ Checkbox</span></td><td class="sval">FALSE</td><td class="fnote">Was a package credit used?</td></tr>
+      <tr><td><div class="fname">Reminder Sent</div></td><td><span class="ftype ft-check">☑ Checkbox</span></td><td class="sval">✓ TRUE</td><td class="fnote">Prevents duplicate reminders</td></tr>
+      <tr><td><div class="fname">Reminder Sent At</div></td><td><span class="ftype ft-date">📅 Date</span></td><td class="sval">2025-04-14 10:05AM</td><td class="fnote">Timestamp</td></tr>
+      <tr><td><div class="fname">Client Confirmed</div></td><td><span class="ftype ft-check">☑ Checkbox</span></td><td class="sval">✓ TRUE</td><td class="fnote">Replied YES to reminder</td></tr>
+      <tr><td><div class="fname">Feedback Sent</div></td><td><span class="ftype ft-check">☑ Checkbox</span></td><td class="sval">FALSE</td><td class="fnote">Post-visit feedback SMS sent?</td></tr>
+      <tr><td><div class="fname">Feedback Score</div></td><td><span class="ftype ft-rating">⭐ Rating (1–5)</span></td><td class="sval">⭐⭐⭐⭐⭐</td><td class="fnote">Client's SMS star rating</td></tr>
+      <tr><td><div class="fname">Pre-Treatment Notes</div></td><td><span class="ftype ft-long">📝 Long Text</span></td><td class="sval">Client allergic to lidocaine</td><td class="fnote">Safety notes for provider</td></tr>
+      <tr><td><div class="fname">Call ID</div></td><td><span class="ftype ft-text">🔤 Text</span></td><td class="sval">vapi_spa_001</td><td class="fnote">Links to Vapi call record</td></tr>
+      <tr><td><div class="fname">Created At</div></td><td><span class="ftype ft-created">⏱ Created Time</span></td><td class="sval">Auto</td><td class="fnote">Automatic timestamp</td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<!-- TABLE 3: CALL LOGS -->
+<div class="tcard" id="c3">
+  <div class="thead" onclick="tog('c3')">
+    <div class="ticon" style="background:var(--sage-d)">📞</div>
+    <div class="tinfo">
+      <div class="tname">Call Logs</div>
+      <div class="tdesc">Full transcripts, AI summaries, estimated revenue and package interest per call</div>
+    </div>
+    <div class="tmeta">
+      <span class="mpill" style="background:var(--sage-d);color:var(--sage)">15 fields</span>
+      <span class="mpill" style="background:var(--s3);color:var(--muted)">Audit</span>
+      <span class="xicon">▼</span>
+    </div>
+  </div>
+  <div style="overflow-x:auto;display:none" class="table-body">
+  <table class="ftable">
+    <thead><tr><th>Field Name</th><th>Type</th><th>Sample Value</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><div class="fname">Log ID <span class="fprim">PRIMARY</span></div></td><td><span class="ftype ft-auto">🔢 Auto Number</span></td><td class="sval">LOG-0301</td><td class="fnote">Auto-generated</td></tr>
+      <tr><td><div class="fname">Client Name</div></td><td><span class="ftype ft-text">🔤 Text</span></td><td class="sval">Sophia Laurent</td><td class="fnote">From AI extraction</td></tr>
+      <tr><td><div class="fname">Phone</div></td><td><span class="ftype ft-phone">📱 Phone</span></td><td class="sval">(555) 234-7890</td><td class="fnote"></td></tr>
+      <tr><td><div class="fname">Call Date</div></td><td><span class="ftype ft-date">📅 Date</span></td><td class="sval">April 15, 2025</td><td class="fnote"></td></tr>
+      <tr><td><div class="fname">Call Time</div></td><td><span class="ftype ft-text">🔤 Text</span></td><td class="sval">9:22 AM</td><td class="fnote"></td></tr>
+      <tr><td><div class="fname">Duration</div></td><td><span class="ftype ft-text">🔤 Text</span></td><td class="sval">4m 10s</td><td class="fnote">From Vapi metadata</td></tr>
+      <tr><td><div class="fname">Call Summary</div></td><td><span class="ftype ft-long">📝 Long Text</span></td><td class="sval">VIP client booked quarterly Botox…</td><td class="fnote">AI-generated summary</td></tr>
+      <tr><td><div class="fname">Full Transcript</div></td><td><span class="ftype ft-long">📝 Long Text</span></td><td class="sval">Aria: Welcome to Lumière…</td><td class="fnote">Word-for-word transcript</td></tr>
+      <tr><td><div class="fname">Service Requested</div></td><td><span class="ftype ft-text">🔤 Text</span></td><td class="sval">Botox</td><td class="fnote">Detected by n8n parser</td></tr>
+      <tr><td><div class="fname">Estimated Value</div></td><td><span class="ftype ft-currency">$ Currency</span></td><td class="sval">$350</td><td class="fnote">Revenue per call tracked</td></tr>
+      <tr><td><div class="fname">Package Interest</div></td><td><span class="ftype ft-check">☑ Checkbox</span></td><td class="sval">FALSE</td><td class="fnote">Did client mention membership?</td></tr>
+      <tr><td><div class="fname">Appointment Booked</div></td><td><span class="ftype ft-check">☑ Checkbox</span></td><td class="sval">✓ TRUE</td><td class="fnote">Was appt confirmed?</td></tr>
+      <tr><td><div class="fname">Is New Client</div></td><td><span class="ftype ft-check">☑ Checkbox</span></td><td class="sval">FALSE</td><td class="fnote">First time caller?</td></tr>
+      <tr><td><div class="fname">Action Taken</div></td><td><span class="ftype ft-sel">▾ Select</span></td><td><div class="opts"><span class="opt" style="background:var(--sage-d);color:var(--sage)">Booked</span><span class="opt" style="background:var(--blue-d);color:var(--blue)">Info Given</span><span class="opt" style="background:var(--gold-d);color:var(--gold)">Callback Set</span><span class="opt" style="background:var(--rose-d);color:var(--rose)">Upsell</span></div></td><td class="fnote">Outcome classification</td></tr>
+      <tr><td><div class="fname">Call ID</div></td><td><span class="ftype ft-text">🔤 Text</span></td><td class="sval">vapi_spa_301</td><td class="fnote">Vapi reference ID</td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<!-- TABLE 4: PACKAGES & MEMBERSHIPS -->
+<div class="tcard" id="c4">
+  <div class="thead" onclick="tog('c4')">
+    <div class="ticon" style="background:var(--plum-d)">🎁</div>
+    <div class="tinfo">
+      <div class="tname">Packages & Memberships</div>
+      <div class="tdesc">Client package balances, membership status, and credit tracking</div>
+    </div>
+    <div class="tmeta">
+      <span class="mpill" style="background:var(--plum-d);color:var(--plum)">12 fields</span>
+      <span class="mpill" style="background:var(--s3);color:var(--muted)">Revenue</span>
+      <span class="xicon">▼</span>
+    </div>
+  </div>
+  <div style="overflow-x:auto;display:none" class="table-body">
+  <table class="ftable">
+    <thead><tr><th>Field Name</th><th>Type</th><th>Sample Value</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><div class="fname">Record ID <span class="fprim">PRIMARY</span></div></td><td><span class="ftype ft-auto">🔢 Auto Number</span></td><td class="sval">PKG-0012</td><td class="fnote">Auto-generated</td></tr>
+      <tr><td><div class="fname">Client Name</div></td><td><span class="ftype ft-text">🔤 Text</span></td><td class="sval">Chloe Winters</td><td class="fnote">Linked to Clients table</td></tr>
+      <tr><td><div class="fname">Phone</div></td><td><span class="ftype ft-phone">📱 Phone</span></td><td class="sval">(555) 345-6789</td><td class="fnote"></td></tr>
+      <tr><td><div class="fname">Package Type</div></td><td><span class="ftype ft-sel">▾ Select</span></td><td><div class="opts"><span class="opt" style="background:var(--rose-d);color:var(--rose)">Radiance Membership</span><span class="opt" style="background:var(--blue-d);color:var(--blue)">Botox Club</span><span class="opt" style="background:var(--gold-d);color:var(--gold)">Glow Bundle 6 Peels</span><span class="opt" style="background:var(--sage-d);color:var(--sage)">Laser Package 6x</span></div></td><td class="fnote"></td></tr>
+      <tr><td><div class="fname">Total Sessions</div></td><td><span class="ftype ft-num">🔢 Number</span></td><td class="sval">6</td><td class="fnote">Total sessions in package</td></tr>
+      <tr><td><div class="fname">Sessions Used</div></td><td><span class="ftype ft-num">🔢 Number</span></td><td class="sval">3</td><td class="fnote">Decremented per use</td></tr>
+      <tr><td><div class="fname">Sessions Remaining</div></td><td><span class="ftype ft-num">🔢 Number</span></td><td class="sval">3</td><td class="fnote">Formula: Total - Used</td></tr>
+      <tr><td><div class="fname">Package Price Paid</div></td><td><span class="ftype ft-currency">$ Currency</span></td><td class="sval">$1,499</td><td class="fnote">Original purchase price</td></tr>
+      <tr><td><div class="fname">Monthly Fee</div></td><td><span class="ftype ft-currency">$ Currency</span></td><td class="sval">$299</td><td class="fnote">For memberships</td></tr>
+      <tr><td><div class="fname">Status</div></td><td><span class="ftype ft-sel">▾ Select</span></td><td><div class="opts"><span class="opt" style="background:var(--sage-d);color:var(--sage)">Active</span><span class="opt" style="background:var(--gold-d);color:var(--gold)">Expiring Soon</span><span class="opt" style="background:var(--rose-d);color:var(--rose)">Expired</span><span class="opt" style="background:#2A2020;color:#888">Cancelled</span></div></td><td class="fnote"></td></tr>
+      <tr><td><div class="fname">Purchase Date</div></td><td><span class="ftype ft-date">📅 Date</span></td><td class="sval">2025-01-10</td><td class="fnote"></td></tr>
+      <tr><td><div class="fname">Expiry Date</div></td><td><span class="ftype ft-date">📅 Date</span></td><td class="sval">2025-07-10</td><td class="fnote">6 months from purchase</td></tr>
+      <tr><td><div class="fname">Notes</div></td><td><span class="ftype ft-long">📝 Long Text</span></td><td class="sval">Client prefers Maya for peels</td><td class="fnote"></td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<!-- TABLE 5: REVENUE TRACKER -->
+<div class="tcard" id="c5">
+  <div class="thead" onclick="tog('c5')">
+    <div class="ticon" style="background:var(--blue-d)">💰</div>
+    <div class="tinfo">
+      <div class="tname">Revenue Tracker</div>
+      <div class="tdesc">Monthly revenue, AI booking value, and service breakdown for owner reporting</div>
+    </div>
+    <div class="tmeta">
+      <span class="mpill" style="background:var(--blue-d);color:var(--blue)">10 fields</span>
+      <span class="mpill" style="background:var(--s3);color:var(--muted)">Reporting</span>
+      <span class="xicon">▼</span>
+    </div>
+  </div>
+  <div style="overflow-x:auto;display:none" class="table-body">
+  <table class="ftable">
+    <thead><tr><th>Field Name</th><th>Type</th><th>Sample Value</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><div class="fname">Month <span class="fprim">PRIMARY</span></div></td><td><span class="ftype ft-text">🔤 Text</span></td><td class="sval">April 2025</td><td class="fnote">Month + Year</td></tr>
+      <tr><td><div class="fname">Total Calls</div></td><td><span class="ftype ft-num">🔢 Number</span></td><td class="sval">127</td><td class="fnote">All AI-handled calls</td></tr>
+      <tr><td><div class="fname">Appts Booked (AI)</div></td><td><span class="ftype ft-num">🔢 Number</span></td><td class="sval">89</td><td class="fnote">AI-confirmed bookings</td></tr>
+      <tr><td><div class="fname">AI Booking Rate</div></td><td><span class="ftype ft-num">🔢 Number</span></td><td class="sval">70%</td><td class="fnote">Bookings / Total calls</td></tr>
+      <tr><td><div class="fname">Revenue (AI Booked)</div></td><td><span class="ftype ft-currency">$ Currency</span></td><td class="sval">$24,380</td><td class="fnote">Sum of AI-booked appointment values</td></tr>
+      <tr><td><div class="fname">New Clients</div></td><td><span class="ftype ft-num">🔢 Number</span></td><td class="sval">18</td><td class="fnote">New profiles created this month</td></tr>
+      <tr><td><div class="fname">Package Signups</div></td><td><span class="ftype ft-num">🔢 Number</span></td><td class="sval">5</td><td class="fnote">New memberships/packages sold</td></tr>
+      <tr><td><div class="fname">Top Treatment</div></td><td><span class="ftype ft-text">🔤 Text</span></td><td class="sval">Botox</td><td class="fnote">Most booked that month</td></tr>
+      <tr><td><div class="fname">Avg Satisfaction</div></td><td><span class="ftype ft-num">🔢 Number</span></td><td class="sval">4.9</td><td class="fnote">Average feedback score</td></tr>
+      <tr><td><div class="fname">Receptionist Hrs Saved</div></td><td><span class="ftype ft-num">🔢 Number</span></td><td class="sval">9.5</td><td class="fnote">Total calls × 4.5 mins ÷ 60</td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<!-- SETUP GUIDE -->
+<div class="sec-title" style="margin-top:2rem">Setup Guide</div>
+<div class="setup-card">
+  <div class="setup-head"><span style="font-size:1.3rem">✦</span><h2>Build Your Airtable Base in 20 Minutes</h2></div>
+  <div class="steps">
+    <div class="step" style="animation-delay:.05s"><div class="sn" style="background:var(--rose-d);color:var(--rose)">1</div><div class="sc2"><div class="stitle">Create Airtable account & new base</div><div class="sdesc">Go to airtable.com → Sign up → "+ Add a base" → Start from scratch → Name it <strong>GlowAssist AI — Med Spa</strong></div><div class="scode">https://airtable.com/signup</div></div></div>
+    <div class="step" style="animation-delay:.1s"><div class="sn" style="background:var(--rose-d);color:var(--rose)">2</div><div class="sc2"><div class="stitle">Create all 5 tables</div><div class="sdesc">Rename Table 1 to <strong>Clients</strong>, then add: <strong>Appointments</strong>, <strong>Call Logs</strong>, <strong>Packages & Memberships</strong>, <strong>Revenue Tracker</strong>. Use the + tab at the top.</div></div></div>
+    <div class="step" style="animation-delay:.15s"><div class="sn" style="background:var(--rose-d);color:var(--rose)">3</div><div class="sc2"><div class="stitle">Add all fields — match names exactly</div><div class="sdesc">n8n uses exact field names to write data. Any mismatch will cause errors. Copy field names from this template carefully. Field type matters too — set Currency for price fields, not Text.</div></div></div>
+    <div class="step" style="animation-delay:.2s"><div class="sn" style="background:var(--rose-d);color:var(--rose)">4</div><div class="sc2"><div class="stitle">Set up all Treatment options in Appointments</div><div class="sdesc">In the Treatment field, add all 12 options: Botox, Dermal Filler, Lip Filler, HydraFacial, VI Chemical Peel, Laser Resurfacing, Laser Hair Removal, Microneedling, Microneedling + PRP, RF Skin Tightening, Consultation, Membership Inquiry.</div></div></div>
+    <div class="step" style="animation-delay:.25s"><div class="sn" style="background:var(--rose-d);color:var(--rose)">5</div><div class="sc2"><div class="stitle">Copy your Base ID for n8n</div><div class="sdesc">Your Base ID is in the Airtable URL — it starts with "app". Copy it and replace YOUR_AIRTABLE_BASE_ID in all n8n Airtable nodes.</div><div class="scode">URL: airtable.com/appXXXXXXXXXX/...
+                ↑ Copy this part (starts with "app")</div></div></div>
+    <div class="step" style="animation-delay:.3s"><div class="sn" style="background:var(--rose-d);color:var(--rose)">6</div><div class="sc2"><div class="stitle">Create 3 Views per table</div><div class="sdesc"><strong>Grid View</strong> (all records), <strong>Gallery View</strong> (visual client cards), <strong>Calendar View</strong> on Appointments (see bookings by day). The calendar view is the most impressive thing to show a spa owner!</div></div></div>
+    <div class="step" style="animation-delay:.35s"><div class="sn" style="background:var(--rose-d);color:var(--rose)">7</div><div class="sc2"><div class="stitle">Set up Airtable Automations (bonus)</div><div class="sdesc">Add built-in Airtable automation: when <strong>Sessions Remaining = 1</strong> in Packages table → email spa owner to upsell the renewal. Another: when <strong>Client Status = Lapsed</strong> → notify front desk.</div></div></div>
+    <div class="step" style="animation-delay:.4s"><div class="sn" style="background:var(--rose-d);color:var(--rose)">8</div><div class="sc2"><div class="stitle">Share with spa owner — this is your value delivery</div><div class="sdesc">Click Share → Invite by email → set role to "Editor". The owner gets their own login to view all data live on any device. Show this during your demo — it's the most impressive moment.</div></div></div>
+    <div class="step" style="animation-delay:.45s"><div class="sn" style="background:var(--gold-d);color:var(--gold)">9</div><div class="sc2"><div class="stitle">Add 4 sample client records before the demo</div><div class="sdesc">Manually add 4 realistic fake clients to make the base look professional and lived-in. Use the sample data shown in this template. Include one VIP client with high total spend.</div></div></div>
+    <div class="step" style="animation-delay:.5s"><div class="sn" style="background:var(--gold-d);color:var(--gold)">10</div><div class="sc2"><div class="stitle">Upgrade to Airtable Pro for the spa</div><div class="sdesc">At $20/month, Pro unlocks unlimited records and advanced reporting — include this in your monthly fee to the client. Suggest it once they hit 300+ client records.</div></div></div>
+  </div>
+</div>
+
+<!-- TIPS -->
+<div class="sec-title">Med Spa Specific Tips</div>
+<div class="tips">
+  <div class="tip"><div class="tico">💉</div><div class="ttitle">Track units & refills for injectables</div><div class="ttext">Add a "Units Used" field to Appointments for Botox and filler sessions. This helps the spa track product usage and cost per session — a valuable operational insight.</div></div>
+  <div class="tip"><div class="tico">🎂</div><div class="ttitle">Birthday offers drive return visits</div><div class="ttext">Use the Date of Birth field to trigger a birthday SMS automation in n8n: send a 15% off offer 7 days before their birthday. Med spa clients love personalised luxury gestures.</div></div>
+  <div class="tip"><div class="tico">📦</div><div class="ttitle">Package balance alert</div><div class="ttext">Set up an Airtable automation: when Sessions Remaining drops to 1, notify the spa team to upsell the renewal during the client's next visit. Never let a package expire silently.</div></div>
+  <div class="tip"><div class="tico">💰</div><div class="ttitle">Show revenue saved in your report</div><div class="ttext">Include the Revenue Tracker table in your monthly report to the spa. Showing "$24,380 booked by AI this month" justifies your $400–600/month fee instantly — 40x ROI is hard to argue with.</div></div>
+  <div class="tip"><div class="tico">🌸</div><div class="ttitle">Separate VIP client view</div><div class="ttext">Create a filtered view in Clients showing only Status = VIP. Share this view with the spa owner so they can personally follow up with their highest-value clients each month.</div></div>
+  <div class="tip"><div class="tico">📊</div><div class="ttitle">Revenue Tracker is your monthly proof</div><div class="ttext">Fill in the Revenue Tracker table manually each month using data from Call Logs. This one table — showing AI booking rate, revenue, and hours saved — is your strongest retention tool as a service provider.</div></div>
+</div>
+
+<!-- FOOTER -->
+<div style="border-top:1px solid var(--border);margin-top:2rem;padding-top:1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+  <div>
+    <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.1rem;color:var(--rose);margin-bottom:3px">GlowAssist AI</div>
+    <div style="font-size:.72rem;color:var(--dim)">Airtable Template v1.0 · 5 tables · 71 fields · Med Spa Edition</div>
+  </div>
+  <div style="font-size:.72rem;color:var(--dim);text-align:right">Pair with: n8n workflow + Vapi.ai + Twilio<br>Built for luxury med spa AI receptionists</div>
+</div>
+
+</div>
+
+<script>
+function tog(id){
+  const c=document.getElementById(id);
+  const isOpen=c.classList.contains('open');
+  c.classList.toggle('open',!isOpen);
+  c.querySelectorAll('.table-body,.samples').forEach(el=>{
+    el.style.display=isOpen?'none':'block';
+  });
+}
+
+function expandAll(){
+  ['c1','c2','c3','c4','c5'].forEach(id=>{
+    const c=document.getElementById(id);
+    c.classList.add('open');
+    c.querySelectorAll('.table-body,.samples').forEach(el=>el.style.display='block');
+  });
+}
+
+function collapseAll(){
+  ['c1','c2','c3','c4','c5'].forEach(id=>{
+    const c=document.getElementById(id);
+    c.classList.remove('open');
+    c.querySelectorAll('.table-body,.samples').forEach(el=>el.style.display='none');
+  });
+}
+
+// Animate steps
+const obs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{ if(e.isIntersecting) e.target.style.opacity='1'; });
+},{threshold:.1});
+document.querySelectorAll('.step').forEach(s=>{s.style.opacity='0';obs.observe(s);});
+</script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash: npm run dev",
+      "Bash: npx ts-node-dev",
+      "Bash: npm run test:watch",
+      "Bash: docker-compose -f docker-compose.dev.yml up",
+      "Bash: docker-compose -f docker-compose.dev.yml down",
+      "Bash: docker-compose -f docker-compose.dev.yml logs -f",
+      "Bash: curl localhost:*",
+      "Bash: ngrok http *",
+      "Bash: npx prisma migrate reset",
+      "Bash: npx prisma db seed",
+      "Bash(npm create *)",
+      "Bash(npm --version)",
+      "Bash(npx create-vite@latest frontend-temp --template react-ts)",
+      "Bash(npm install *)",
+      "Bash(export PATH=\"/c/Program Files/nodejs:$PATH\")",
+      "Bash(npm run *)",
+      "Bash(npx tsc *)",
+      "Bash(curl -s http://localhost:5174)",
+      "mcp__ide__executeCode",
+      "Bash(node *)",
+      "Bash(which n8n *)",
+      "Bash(npx n8n *)",
+      "Bash(where node *)",
+      "Bash(\"C:/Program Files/nodejs/node.exe\" node_modules/.bin/vite)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173)",
+      "Bash(netstat -ano)",
+      "Bash(tasklist)",
+      "Bash(cmd.exe /c \"n8n --version\")",
+      "Bash(cmd.exe /c \"npx n8n --version 2>&1\")",
+      "Bash(npm list *)",
+      "Bash(cmd.exe /c \"set N8N_PORT=5678 && n8n start\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5678)",
+      "Bash(n8n start *)",
+      "Bash(\"C:/Program Files/nodejs/node.exe\" \"C:/Users/admin/AppData/Roaming/npm/node_modules/n8n/bin/n8n\" start)",
+      "Bash(export PATH=\"/c/Users/admin/AppData/Roaming/npm:$PATH\")",
+      "Bash(cmd.exe *)",
+      "Bash(export PATH=\"$PATH:/c/Users/admin/AppData/Roaming/npm\")",
+      "Bash(n8n --version)",
+      "Bash(\"C:/Users/admin/AppData/Roaming/npm/node_modules/n8n/bin/n8n.js\" start *)",
+      "Bash(npm uninstall *)",
+      "Bash(\"C:/Program Files/nodejs/node.exe\" node_modules/n8n/bin/n8n.js start)",
+      "Bash(echo \"EXIT CODE: $?\")",
+      "Bash(npm cache *)",
+      "PowerShell(npm *)",
+      "Bash(n8n --help)"
+    ],
+    "requireConfirmation": []
+  },
+  "model": "claude-opus-4-7",
+  "version": "1.0",
+  "extends": ".claude/settings.json",
+  "debugging": {
+    "verboseLogging": true,
+    "logLevel": "debug",
+    "showTokenUsage": true,
+    "showToolCalls": true
+  },
+  "experimental": {
+    "enableMultiAgent": true,
+    "enablePromptCaching": true,
+    "enableStreaming": true
+  },
+  "localOnly": {
+    "allowUnsafeCommands": false,
+    "mockExternalServices": true,
+    "useLocalDB": true
+  },
+  "devShortcuts": {
+    "quickTest": "npm test -- --watch",
+    "quickBuild": "npm run build",
+    "quickLint": "npm run lint",
+    "quickFormat": "npm run format"
+  },
+  "mockServices": {
+    "ai": true,
+    "twilio": true,
+    "whatsapp": true,
+    "email": true
+  }
+}

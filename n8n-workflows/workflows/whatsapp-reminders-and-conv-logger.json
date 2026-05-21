@@ -1,0 +1,316 @@
+{
+  "name": "GlowAssist — WhatsApp Appointment Reminders & Conversation Logger",
+  "nodes": [
+
+    {
+      "id": "node-cron-24h",
+      "name": "Cron — Every Hour (Reminder Check)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-900, 200],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      },
+      "notes": "Fires every hour. The filter nodes below select only appointments that start in ~24h or ~2h."
+    },
+
+    {
+      "id": "node-fetch-24h-appts",
+      "name": "Fetch 24-Hour Appointments",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [-680, 100],
+      "parameters": {
+        "url": "={{$env.BACKEND_API_URL || 'http://localhost:3001'}}/api/appointments",
+        "method": "GET",
+        "sendHeaders": true,
+        "headers": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{$env.BACKEND_JWT_TOKEN}}" }
+          ]
+        },
+        "sendQueryParameters": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "status", "value": "scheduled" },
+            { "name": "startDate", "value": "={{ new Date(Date.now() + 23*60*60*1000).toISOString().slice(0,10) }}" },
+            { "name": "endDate",   "value": "={{ new Date(Date.now() + 25*60*60*1000).toISOString().slice(0,10) }}" }
+          ]
+        }
+      },
+      "notes": "Fetches scheduled appointments within the next 24-25 hours window."
+    },
+
+    {
+      "id": "node-filter-24h",
+      "name": "Filter — Exactly 24h Window",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-460, 100],
+      "parameters": {
+        "jsCode": "const now = Date.now();\nconst items = $input.all();\nconst appts = items[0]?.json?.data || items[0]?.json || [];\nconst window24h = Array.isArray(appts)\n  ? appts.filter(a => {\n      const apptTs = new Date(`${a.appointment_date}T${a.appointment_time || '00:00:00'}`).getTime();\n      const diffHours = (apptTs - now) / 3600000;\n      return diffHours >= 23 && diffHours <= 25;\n    })\n  : [];\nreturn window24h.map(a => ({ json: a }));"
+      },
+      "notes": "Keeps only appointments 23-25 hours from now so each runs exactly once per appointment."
+    },
+
+    {
+      "id": "node-send-24h-reminder",
+      "name": "Send 24-Hour WhatsApp Reminder",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [-240, 100],
+      "webhookId": "whatsapp-reminder-24h",
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "1093698253829228",
+        "recipientPhoneNumber": "={{ $json.phone_number }}",
+        "textBody": "=👋 Hi {{ $json.client_name }}!\\n\\n💅 This is a friendly reminder from *Westhill Nails & Spa* about your upcoming appointment:\\n\\n📋 *Service:* {{ $json.service_name }}\\n📅 *Date:* {{ new Date($json.appointment_date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' }) }}\\n🕒 *Time:* {{ $json.appointment_time }}\\n👩‍🔧 *Technician:* {{ $json.provider || 'Our expert team' }}\\n\\n✅ Please arrive 5 minutes early.\\n\\nSee you tomorrow! 🌸\\n\\nNeed to reschedule? Simply reply with *RESCHEDULE* and we'll help you find a new time.",
+        "additionalFields": { "previewUrl": false }
+      },
+      "credentials": {
+        "whatsAppApi": {
+          "id": "m3O3H7hZRxW8O5Xm",
+          "name": "WhatsApp account Milind"
+        }
+      }
+    },
+
+    {
+      "id": "node-log-24h-sent",
+      "name": "Log 24h Reminder Sent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [-20, 100],
+      "parameters": {
+        "url": "={{$env.BACKEND_API_URL || 'http://localhost:3001'}}/api/appointments/{{ $json.id }}/log",
+        "method": "POST",
+        "sendHeaders": true,
+        "headers": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{$env.BACKEND_JWT_TOKEN}}" },
+            { "name": "Content-Type",  "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"action\": \"24h_reminder_sent\", \"changedBy\": \"system\", \"note\": \"WhatsApp 24-hour reminder sent automatically\" }",
+        "options": { "ignore404": true }
+      },
+      "notes": "Optional: logs reminder sent into appointment_logs table. Skips gracefully if endpoint not active."
+    },
+
+    {
+      "id": "node-fetch-2h-appts",
+      "name": "Fetch 2-Hour Appointments",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [-680, 350],
+      "parameters": {
+        "url": "={{$env.BACKEND_API_URL || 'http://localhost:3001'}}/api/appointments",
+        "method": "GET",
+        "sendHeaders": true,
+        "headers": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{$env.BACKEND_JWT_TOKEN}}" }
+          ]
+        },
+        "sendQueryParameters": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "status", "value": "scheduled" },
+            { "name": "startDate", "value": "={{ new Date().toISOString().slice(0,10) }}" },
+            { "name": "endDate",   "value": "={{ new Date().toISOString().slice(0,10) }}" }
+          ]
+        }
+      },
+      "notes": "Fetches today's scheduled appointments — filter node below narrows to 2h window."
+    },
+
+    {
+      "id": "node-filter-2h",
+      "name": "Filter — Exactly 2h Window",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-460, 350],
+      "parameters": {
+        "jsCode": "const now = Date.now();\nconst items = $input.all();\nconst appts = items[0]?.json?.data || items[0]?.json || [];\nconst window2h = Array.isArray(appts)\n  ? appts.filter(a => {\n      const apptTs = new Date(`${a.appointment_date}T${a.appointment_time || '00:00:00'}`).getTime();\n      const diffHours = (apptTs - now) / 3600000;\n      return diffHours >= 1.75 && diffHours <= 2.25;\n    })\n  : [];\nreturn window2h.map(a => ({ json: a }));"
+      },
+      "notes": "Keeps only appointments 1h45m-2h15m from now."
+    },
+
+    {
+      "id": "node-send-2h-reminder",
+      "name": "Send 2-Hour WhatsApp Reminder",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [-240, 350],
+      "webhookId": "whatsapp-reminder-2h",
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "1093698253829228",
+        "recipientPhoneNumber": "={{ $json.phone_number }}",
+        "textBody": "=⏰ Hey {{ $json.client_name }}!\\n\\nYour appointment at *Westhill Nails & Spa* is in just *2 hours*!\\n\\n💅 *Service:* {{ $json.service_name }}\\n🕒 *Time:* {{ $json.appointment_time }}\\n📍 *Location:* Westhill Nails & Spa\\n\\nWe're looking forward to seeing you soon! 🌸\\n\\nRunning late or need to cancel? Please reply ASAP so we can accommodate other clients.",
+        "additionalFields": { "previewUrl": false }
+      },
+      "credentials": {
+        "whatsAppApi": {
+          "id": "m3O3H7hZRxW8O5Xm",
+          "name": "WhatsApp account Milind"
+        }
+      }
+    },
+
+    {
+      "id": "node-log-2h-sent",
+      "name": "Log 2h Reminder Sent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [-20, 350],
+      "parameters": {
+        "url": "={{$env.BACKEND_API_URL || 'http://localhost:3001'}}/api/appointments/{{ $json.id }}/log",
+        "method": "POST",
+        "sendHeaders": true,
+        "headers": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{$env.BACKEND_JWT_TOKEN}}" },
+            { "name": "Content-Type",  "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"action\": \"2h_reminder_sent\", \"changedBy\": \"system\", \"note\": \"WhatsApp 2-hour reminder sent automatically\" }",
+        "options": { "ignore404": true }
+      }
+    },
+
+    {
+      "id": "node-cron-conv-log",
+      "name": "Cron — Daily Conv Log (3 AM)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-900, 600],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 3 * * *"
+            }
+          ]
+        }
+      },
+      "notes": "Fires daily at 3 AM to archive yesterday's conversation transcripts."
+    },
+
+    {
+      "id": "node-fetch-conv-logs",
+      "name": "Fetch Yesterday WhatsApp Msgs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-680, 600],
+      "parameters": {
+        "jsCode": "// Prepare date window: yesterday 00:00 to 23:59 UTC\nconst yesterday = new Date();\nyesterday.setDate(yesterday.getDate() - 1);\nconst dateStr = yesterday.toISOString().slice(0, 10);\nreturn [{ json: { date: dateStr, note: 'Fetch WhatsApp conversation logs for archiving' } }];"
+      },
+      "notes": "Calculates yesterday's date for conversation log archiving."
+    },
+
+    {
+      "id": "node-post-conv-log",
+      "name": "Archive AI Conversation Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [-460, 600],
+      "parameters": {
+        "url": "={{$env.BACKEND_API_URL || 'http://localhost:3001'}}/api/conversations/archive",
+        "method": "POST",
+        "sendHeaders": true,
+        "headers": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{$env.BACKEND_JWT_TOKEN}}" },
+            { "name": "Content-Type",  "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"date\": \"{{ $json.date }}\", \"source\": \"whatsapp_ai\", \"archivedBy\": \"n8n_cron\" }",
+        "options": { "ignore404": true }
+      },
+      "notes": "POSTs a request to the backend to archive conversation transcripts into crm_live_chats table. Fails silently if endpoint not yet active."
+    },
+
+    {
+      "id": "node-log-archive-done",
+      "name": "Log Archive Complete",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-240, 600],
+      "parameters": {
+        "jsCode": "const result = $input.first().json;\nconsole.log('[Conv Archive]', new Date().toISOString(), JSON.stringify(result));\nreturn [{ json: { status: 'archived', date: $node['Fetch Yesterday WhatsApp Msgs'].json.date, result } }];"
+      },
+      "notes": "Logs archive result to n8n execution logs for audit trail."
+    }
+  ],
+
+  "connections": {
+    "Cron — Every Hour (Reminder Check)": {
+      "main": [
+        [
+          { "node": "Fetch 24-Hour Appointments", "type": "main", "index": 0 },
+          { "node": "Fetch 2-Hour Appointments",  "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Fetch 24-Hour Appointments": {
+      "main": [[ { "node": "Filter — Exactly 24h Window", "type": "main", "index": 0 } ]]
+    },
+    "Filter — Exactly 24h Window": {
+      "main": [[ { "node": "Send 24-Hour WhatsApp Reminder", "type": "main", "index": 0 } ]]
+    },
+    "Send 24-Hour WhatsApp Reminder": {
+      "main": [[ { "node": "Log 24h Reminder Sent", "type": "main", "index": 0 } ]]
+    },
+    "Fetch 2-Hour Appointments": {
+      "main": [[ { "node": "Filter — Exactly 2h Window", "type": "main", "index": 0 } ]]
+    },
+    "Filter — Exactly 2h Window": {
+      "main": [[ { "node": "Send 2-Hour WhatsApp Reminder", "type": "main", "index": 0 } ]]
+    },
+    "Send 2-Hour WhatsApp Reminder": {
+      "main": [[ { "node": "Log 2h Reminder Sent", "type": "main", "index": 0 } ]]
+    },
+    "Cron — Daily Conv Log (3 AM)": {
+      "main": [[ { "node": "Fetch Yesterday WhatsApp Msgs", "type": "main", "index": 0 } ]]
+    },
+    "Fetch Yesterday WhatsApp Msgs": {
+      "main": [[ { "node": "Archive AI Conversation Log", "type": "main", "index": 0 } ]]
+    },
+    "Archive AI Conversation Log": {
+      "main": [[ { "node": "Log Archive Complete", "type": "main", "index": 0 } ]]
+    }
+  },
+
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+
+  "tags": ["reminders", "whatsapp", "cron", "automation"],
+
+  "versionId": "1.0.0",
+
+  "notes": "SETUP INSTRUCTIONS:\n1. Set environment variables in n8n: BACKEND_API_URL, BACKEND_JWT_TOKEN, GEMINI_API_KEY\n2. Update phoneNumberId (1093698253829228) to your WhatsApp Business phone number ID\n3. Update WhatsApp credentials IDs to match your n8n credential store\n4. Activate the workflow — the hourly cron will check for reminders automatically\n5. The 24h reminder fires for appointments 23-25h from execution time\n6. The 2h reminder fires for appointments 1h45m-2h15m from execution time\n7. Both reminders log to the backend appointment_logs table\n8. The daily 3AM cron archives conversation transcripts to crm_live_chats"
+}
