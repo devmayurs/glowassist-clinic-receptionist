@@ -1,41 +1,15 @@
-@import "tailwindcss";
-
-@theme {
-  --color-ivory: #FAF8F5;
-  --color-warm: #F4EFE8;
-  --color-deep: #1C1410;
-  --color-brown: #3D2B1F;
-  --color-rose: #C9847A;
-  --color-rose-light: #E8A89F;
-  --color-rose-pale: #F9EDEB;
-  --color-rose-glow: rgba(201,132,122,0.18);
-  --color-gold: #B8965A;
-  --color-gold-light: #D4AF7A;
-  --color-gold-pale: #FBF5E8;
-  --color-sage: #7A9E7E;
-  --color-sage-pale: #EDF3EE;
-  --color-plum: #7B4F6E;
-  --color-plum-pale: #F3EBF1;
-  --color-text: #2A1F1A;
-  --color-text-muted: #8A7268;
-  --color-border: #E8DDD6;
-  --color-white: #FFFFFF;
-
-  --font-family-sans: 'Jost', sans-serif;
-  --font-family-serif: 'Cormorant Garamond', serif;
-}
-
 body {
-  font-family: var(--font-family-sans);
-  background: var(--color-ivory);
-  color: var(--color-text);
+  font-family: 'Jost', sans-serif;
+  background: #FAF8F5;
+  color: #2A1F1A;
   min-height: 100vh;
   overflow-x: hidden;
+  margin: 0;
 }
 
 /* Custom animations */
 @keyframes glow {
-  0%, 100% { opacity: 1; box-shadow: 0 0 4px var(--color-rose); }
+  0%, 100% { opacity: 1; box-shadow: 0 0 4px #C9847A; }
   50% { opacity: 0.4; box-shadow: none; }
 }
 
@@ -72,11 +46,11 @@ body {
 
 /* Scrollbar styling */
 ::-webkit-scrollbar { width: 3px; height: 3px; }
-::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 2px; }
+::-webkit-scrollbar-thumb { background: #E8DDD6; border-radius: 2px; }
 
 /* Button utilities used across pages */
 .btn-rose {
-  background: var(--color-rose);
+  background: #C9847A;
   color: #fff;
   border: none;
   padding: 0.45rem 1rem;
@@ -90,8 +64,8 @@ body {
 
 .btn-outline {
   background: transparent;
-  color: var(--color-text-muted);
-  border: 1px solid var(--color-border);
+  color: #8A7268;
+  border: 1px solid #E8DDD6;
   padding: 0.45rem 1rem;
   border-radius: 0.6rem;
   font-size: 0.82rem;
@@ -99,7 +73,7 @@ body {
   cursor: pointer;
   transition: background 0.15s;
 }
-.btn-outline:hover { background: var(--color-warm); }
+.btn-outline:hover { background: #F4EFE8; }
 
 @keyframes fadeIn {
   from { opacity: 0; }

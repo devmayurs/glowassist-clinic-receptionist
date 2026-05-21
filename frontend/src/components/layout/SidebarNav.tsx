@@ -1,4 +1,5 @@
-import { NavLink } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
+import { List, ListItem, ListItemButton, ListItemText, Box, Badge } from '@mui/material';
 
 const navItems = [
   { path: '/appointments', icon: '📅', label: 'Appointments', badge: undefined },
@@ -9,27 +10,68 @@ const navItems = [
 ];
 
 export default function SidebarNav() {
+  const location = useLocation();
+
   return (
-    <nav className="flex flex-col gap-0.5">
-      {navItems.map((item) => (
-        <NavLink
-          key={item.path}
-          to={item.path}
-          className={({ isActive }) =>
-            `flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[0.82rem] font-medium cursor-pointer transition-all duration-150 ${
-              isActive ? 'bg-rose-pale text-rose' : 'text-text-muted hover:bg-warm'
-            }`
-          }
-        >
-          <span className="w-5 text-center text-[0.9rem]">{item.icon}</span>
-          <span>{item.label}</span>
-          {item.badge && (
-            <span className="ml-auto bg-rose text-white text-[0.62rem] font-bold rounded-full px-2 py-0.5">
-              {item.badge}
-            </span>
-          )}
-        </NavLink>
-      ))}
-    </nav>
+    <List sx={{ p: 0, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+      {navItems.map((item) => {
+        const isActive = location.pathname === item.path;
+        return (
+          <ListItem disablePadding key={item.path}>
+            <ListItemButton
+              component={Link}
+              to={item.path}
+              sx={{
+                borderRadius: '8px',
+                padding: '10px 12px',
+                backgroundColor: isActive ? '#F9EDEB' : 'transparent',
+                color: isActive ? '#C9847A' : '#8A7268',
+                transition: 'all 0.15s ease',
+                '&:hover': {
+                  bgcolor: isActive ? '#F9EDEB' : '#F4EFE8',
+                },
+              }}
+            >
+              <Box 
+                sx={{ 
+                  width: 24, 
+                  textAlign: 'center', 
+                  fontSize: '1rem', 
+                  mr: 1.5,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {item.icon}
+              </Box>
+              <ListItemText 
+                primary={item.label} 
+                primaryTypographyProps={{
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.2px',
+                }}
+              />
+              {item.badge && (
+                <Badge 
+                  badgeContent={item.badge} 
+                  sx={{
+                    '& .MuiBadge-badge': {
+                      bgcolor: '#C9847A',
+                      color: '#FFFFFF',
+                      fontSize: '0.62rem',
+                      fontWeight: 'bold',
+                      height: 18,
+                      minWidth: 18,
+                    }
+                  }}
+                />
+              )}
+            </ListItemButton>
+          </ListItem>
+        );
+      })}
+    </List>
   );
 }

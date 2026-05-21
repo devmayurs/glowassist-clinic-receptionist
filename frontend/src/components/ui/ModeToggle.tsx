@@ -1,3 +1,4 @@
+import { Box, Button } from '@mui/material';
 import { useAppStore } from '../../store/useAppStore';
 
 export default function ModeToggle() {
@@ -13,21 +14,60 @@ export default function ModeToggle() {
   };
 
   return (
-    <div className="ml-auto flex bg-warm rounded-lg p-0.5">
-      <button
+    <Box 
+      sx={{ 
+        ml: 'auto', 
+        display: 'flex', 
+        bgcolor: '#F4EFE8', // warm background
+        borderRadius: '8px', 
+        p: 0.25,
+        border: '1px solid #E8DDD6',
+      }}
+    >
+      <Button
         onClick={() => toggle('sim')}
-        className={`px-2.5 py-1 rounded-md cursor-pointer text-[0.7rem] font-sans border-none transition-all ${mode === 'sim' ? 'bg-white text-rose shadow-sm' : 'bg-transparent text-text-muted'
-          }`}
+        size="small"
+        sx={{
+          px: 1.5,
+          py: 0.5,
+          borderRadius: '6px',
+          fontSize: '0.7rem',
+          fontFamily: "'Jost', sans-serif",
+          textTransform: 'none',
+          minWidth: 0,
+          lineHeight: 1,
+          bgcolor: mode === 'sim' ? '#FFFFFF' : 'transparent',
+          color: mode === 'sim' ? '#C9847A' : '#8A7268',
+          boxShadow: mode === 'sim' ? '0 1px 3px rgba(0,0,0,0.05)' : 'none',
+          '&:hover': {
+            bgcolor: mode === 'sim' ? '#FFFFFF' : 'rgba(0,0,0,0.02)',
+          },
+        }}
       >
         Simulate
-      </button>
-      <button
+      </Button>
+      <Button
         onClick={() => toggle('live')}
-        className={`px-2.5 py-1 rounded-md cursor-pointer text-[0.7rem] font-sans border-none transition-all ${mode === 'live' ? 'bg-white text-rose shadow-sm' : 'bg-transparent text-text-muted'
-          }`}
+        size="small"
+        sx={{
+          px: 1.5,
+          py: 0.5,
+          borderRadius: '6px',
+          fontSize: '0.7rem',
+          fontFamily: "'Jost', sans-serif",
+          textTransform: 'none',
+          minWidth: 0,
+          lineHeight: 1,
+          bgcolor: mode === 'live' ? '#FFFFFF' : 'transparent',
+          color: mode === 'live' ? '#C9847A' : '#8A7268',
+          boxShadow: mode === 'live' ? '0 1px 3px rgba(0,0,0,0.05)' : 'none',
+          '&:hover': {
+            bgcolor: mode === 'live' ? '#FFFFFF' : 'rgba(0,0,0,0.02)',
+          },
+        }}
       >
         Live AI
-      </button>
-    </div>
+      </Button>
+    </Box>
   );
 }

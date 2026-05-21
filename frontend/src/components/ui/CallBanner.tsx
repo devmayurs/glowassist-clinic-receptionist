@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { Box, Typography } from '@mui/material';
 import { useAppStore } from '../../store/useAppStore';
 
 export default function CallBanner() {
@@ -26,11 +27,11 @@ export default function CallBanner() {
       }, 18000);
 
       return () => {
-        clearInterval(intervalRef.current!);
+        if (intervalRef.current) clearInterval(intervalRef.current);
         clearTimeout(timeout);
       };
     }
-  }, [isCallActive, activeCall]);
+  }, [isCallActive, activeCall, endCall, addToast, updateStats]);
 
   if (!isCallActive || !activeCall) return null;
 
@@ -38,17 +39,66 @@ export default function CallBanner() {
     `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
 
   return (
-    <div className="bg-gradient-to-r from-deep to-brown p-3 flex items-center gap-2.5 text-sm border-b border-gold/30">
-      <div className="w-8 h-8 rounded-full bg-rose flex items-center justify-center text-base animate-callRing flex-shrink-0">
+    <Box 
+      sx={{ 
+        background: 'linear-gradient(90deg, #1C1410 0%, #3D2B1F 100%)', 
+        p: 1.5, 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: 1.5, 
+        borderBottom: '1px solid rgba(184, 150, 90, 0.3)', // gold/30
+      }}
+    >
+      <Box 
+        className="animate-callRing"
+        sx={{ 
+          width: 32, 
+          height: 32, 
+          borderRadius: '50%', 
+          bgcolor: '#C9847A', // rose
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          fontSize: '1rem',
+          flexShrink: 0,
+        }}
+      >
         📞
-      </div>
-      <div className="flex-1">
-        <div className="text-[0.62rem] text-white/45 tracking-[1px] uppercase">Active Call — AI Handling</div>
-        <div className="text-white font-semibold text-[0.83rem]">Incoming: {activeCall.phone}</div>
-      </div>
-      <div className="text-gold-light font-semibold text-sm" id="ctimer">
+      </Box>
+      <Box sx={{ flex: 1 }}>
+        <Typography 
+          variant="caption" 
+          sx={{ 
+            fontSize: '0.62rem', 
+            color: 'rgba(255, 255, 255, 0.45)', 
+            letterSpacing: '1px', 
+            textTransform: 'uppercase',
+            display: 'block',
+          }}
+        >
+          Active Call — AI Handling
+        </Typography>
+        <Typography 
+          variant="subtitle2" 
+          sx={{ 
+            color: '#FFFFFF', 
+            fontWeight: 600, 
+            fontSize: '0.83rem',
+          }}
+        >
+          Incoming: {activeCall.phone}
+        </Typography>
+      </Box>
+      <Typography 
+        id="ctimer"
+        sx={{ 
+          color: '#D4AF7A', 
+          fontWeight: 'semibold', 
+          fontSize: '0.875rem',
+        }}
+      >
         {formatTime(duration)}
-      </div>
-    </div>
+      </Typography>
+    </Box>
   );
 }

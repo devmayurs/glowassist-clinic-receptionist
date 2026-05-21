@@ -6,28 +6,51 @@ This is the React + TypeScript + Vite + Zustand CRM administration dashboard for
 
 ## 🎨 Design System & Aesthetics
 
-* **Theme Tokens:** The styling uses a premium, warm aesthetic system from `src/index.css` tailored with warm rose, gold, sage, and plum colors to convey a luxury medspa experience.
-* **Component-Driven Layouts:** Sidebars, navigation panels, and interactive elements are responsive and feature micro-interactions, transitions, and hover-triggered fades.
-* **Dynamic Analytics:** Displays real-time booking channels and treatment trends via Recharts charts.
+* **Material UI (MUI v5) Framework:** The styling is powered by a premium Material UI system utilizing a custom luxury theme configured in `src/styles/theme.ts`.
+* **Luxury Color Scheme:** Built with a sophisticated color palette featuring **Luxury Rose (`#C9847A`)** and **Gold Accents (`#B8965A`)** set against soft ivory background surfaces for an upscale, premium spa experience.
+* **Component-Driven Layouts:** Built with highly interactive, responsive, and tactile MUI components (`Card`, `Drawer`, `Dialog`, `Timeline`, etc.) featuring subtle micro-animations and smooth transitions.
+* **Dynamic Analytics:** Real-time channel and treatment metrics represented via highly responsive Recharts elements.
 
 ---
 
-## 📂 Frontend Directory Structure
+## 📂 Frontend Directory Structure & Single Responsibility Principle (SRP)
+
+The frontend codebase is decoupled according to the **Single Responsibility Principle (SRP)**:
 
 ```
 frontend/
 ├── src/
-│   ├── api/             # Axios API client setups and REST fetch declarations
-│   ├── components/      # Common UI elements and layouts (Sidebar, Header, Chat)
-│   ├── pages/           # Screen Views:
-│   │   ├── AnalyticsPage.tsx   # Dashboard KPIs, Recharts, and Upcoming slots
-│   │   ├── ClientsPage.tsx     # Client lists, search filters, and History modal
-│   │   └── AppointmentsPage.tsx # Month-grid Calendar, detail panel, reschedule dialogs
-│   ├── store/           # Zustand global UI states and auth selectors
+│   ├── apis/            # Modularized HTTP clients pointing to global Axios interceptor
+│   │   ├── axiosInstance.ts # Unified Axios setup with offline catch & JWT headers
+│   │   ├── client.api.ts       # Client-related REST API requests
+│   │   ├── appointment.api.ts  # Appointment scheduling REST API requests
+│   │   └── dashboard.api.ts    # KPI & dashboard aggregation queries
+│   ├── components/      # Common UI components & shared layouts
+│   │   ├── layout/      # Sidebar, SidebarStats, Header, ChatPanel
+│   │   └── ui/          # Toast banners, ModeToggle, CallBanner
+│   ├── constants/       # App-wide configuration, operating hours, package listings
+│   ├── hooks/           # Page-level search filters, drawers, and modal state hooks
+│   │   ├── useDashboard.ts     # Real-time dashboard KPI hooks & fallbacks
+│   │   ├── useClients.ts       # Clients CRM filtering, drawer toggles & API calls
+│   │   ├── useAppointments.ts  # Calendars, rescheduling, & cancellation forms hook
+│   │   └── useChat.ts          # Live Chat interactive simulator state hook
+│   ├── pages/           # Lightweight coordinator containers (no inline APIs or state)
+│   │   ├── AnalyticsPage.tsx   # Dashboard page shell (delegates to sub-components)
+│   │   ├── ClientsPage.tsx     # Clients page shell (delegates to sub-components)
+│   │   ├── AppointmentsPage.tsx # Appointments page shell (delegates to sub-components)
+│   │   ├── CallLogsPage.tsx    # Phone call records registry
+│   │   ├── PackagesPage.tsx    # Treatment promos & loyalty programs list
+│   │   ├── Appointments/components/ # SRP sub-components for scheduling (Calendar, RescheduleDialog, etc.)
+│   │   ├── Clients/components/      # SRP sub-components for Clients CRM (Filters, Table, HistoryDrawer)
+│   │   └── Dashboard/components/    # SRP sub-components for analytics (Kpis, Charts, Upcoming List)
+│   ├── services/        # Business logic rules (operating hours, promotional rules)
+│   ├── store/           # Zustand global state management
+│   ├── styles/          # Custom Material UI theme definition
 │   ├── types/           # Core TypeScript Interfaces (Client, Appointment, KPI)
-│   ├── App.tsx          # Main routing paths and provider wraps
-│   ├── main.tsx         # Virtual DOM root mounter
-│   └── index.css        # Theme configurations, colors, and layout classes
+│   ├── utilities/       # Independent helper functions (date formats, currency formats)
+│   ├── App.tsx          # Router mounter and MUI Theme provider wrap
+│   ├── main.tsx         # DOM entrypoint
+│   └── index.css        # Custom CSS animations and global scrollbar styles
 ├── .env                 # API URL configurations (gitignored)
 ├── package.json         # Front-end packages
 └── vite.config.ts       # Vite bundler configurations

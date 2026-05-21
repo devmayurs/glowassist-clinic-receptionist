@@ -125,28 +125,36 @@ ALTER TABLE appointment_logs ENABLE ROW LEVEL SECURITY;
 -- (Supabase automatically bypasses RLS for the 'service_role' key, no custom policies needed)
 
 -- 2. policy: Authenticated staff (CRM users) have full CRUD permissions
+DROP POLICY IF EXISTS "CRM Staff Full Access - Clients" ON clients;
 CREATE POLICY "CRM Staff Full Access - Clients" ON clients
   TO authenticated USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "CRM Staff Full Access - Services" ON services;
 CREATE POLICY "CRM Staff Full Access - Services" ON services
   TO authenticated USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "CRM Staff Full Access - Staff" ON staff;
 CREATE POLICY "CRM Staff Full Access - Staff" ON staff
   TO authenticated USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "CRM Staff Full Access - Appointments" ON appointments;
 CREATE POLICY "CRM Staff Full Access - Appointments" ON appointments
   TO authenticated USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "CRM Staff Full Access - Payments" ON payments;
 CREATE POLICY "CRM Staff Full Access - Payments" ON payments
   TO authenticated USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "CRM Staff Full Access - Live Chats" ON crm_live_chats;
 CREATE POLICY "CRM Staff Full Access - Live Chats" ON crm_live_chats
   TO authenticated USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "CRM Staff Full Access - Logs" ON appointment_logs;
 CREATE POLICY "CRM Staff Full Access - Logs" ON appointment_logs
   TO authenticated USING (true) WITH CHECK (true);
 
 -- 3. policy: Public / Anonymous Read-Only Access strictly for Services (optional for client-side menu lookups)
+DROP POLICY IF EXISTS "Public Read-Only Access - Active Services" ON services;
 CREATE POLICY "Public Read-Only Access - Active Services" ON services
   FOR SELECT TO anon USING (is_active = true);
 

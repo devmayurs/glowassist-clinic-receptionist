@@ -1,28 +1,73 @@
+import { Box, Typography } from '@mui/material';
 import SidebarStats from './SidebarStats';
 import SidebarNav from './SidebarNav';
 import ClientList from './ClientList';
 
 export default function Sidebar() {
   return (
-    <aside className="w-[250px] bg-white border-r border-border flex flex-col overflow-y-auto">
-      <div className="p-5 border-b border-border">
-        <div className="text-[0.62rem] font-semibold tracking-[2px] uppercase text-text-muted mb-3.5">
+    <Box 
+      component="aside"
+      sx={{ 
+        width: 250, 
+        bgcolor: '#FFFFFF', 
+        borderRight: '1px solid #E8DDD6', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        height: '100%',
+        overflowY: 'auto',
+      }}
+    >
+      <Box sx={{ p: 2.5, borderBottom: '1px solid #E8DDD6' }}>
+        <Typography 
+          variant="caption" 
+          sx={{ 
+            fontSize: '0.62rem', 
+            fontWeight: 600, 
+            letterSpacing: '2px', 
+            textTransform: 'uppercase', 
+            color: '#8A7268',
+            mb: 1.5,
+            display: 'block',
+          }}
+        >
           Today's Overview
-        </div>
+        </Typography>
         <SidebarStats />
-      </div>
-      <div className="p-5 border-b border-border">
-        <div className="text-[0.62rem] font-semibold tracking-[2px] uppercase text-text-muted mb-3.5">
+      </Box>
+      <Box sx={{ p: 2.5, borderBottom: '1px solid #E8DDD6' }}>
+        <Typography 
+          variant="caption" 
+          sx={{ 
+            fontSize: '0.62rem', 
+            fontWeight: 600, 
+            letterSpacing: '2px', 
+            textTransform: 'uppercase', 
+            color: '#8A7268',
+            mb: 1.5,
+            display: 'block',
+          }}
+        >
           Menu
-        </div>
+        </Typography>
         <SidebarNav />
-      </div>
-      <div className="p-5 flex-1">
-        <div className="text-[0.62rem] font-semibold tracking-[2px] uppercase text-text-muted mb-3.5">
+      </Box>
+      <Box sx={{ p: 2.5, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        <Typography 
+          variant="caption" 
+          sx={{ 
+            fontSize: '0.62rem', 
+            fontWeight: 600, 
+            letterSpacing: '2px', 
+            textTransform: 'uppercase', 
+            color: '#8A7268',
+            mb: 1.5,
+            display: 'block',
+          }}
+        >
           Recent Clients
-        </div>
+        </Typography>
         <ClientList />
-      </div>
-    </aside>
+      </Box>
+    </Box>
   );
 }

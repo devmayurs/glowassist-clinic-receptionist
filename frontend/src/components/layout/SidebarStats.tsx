@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Grid, Box, Typography } from '@mui/material';
 
 type AnimatedStats = { calls: number; bookings: number; newClients: number; revenue: number };
 
@@ -23,24 +24,58 @@ export default function SidebarStats() {
     return () => intervals.forEach(clearInterval);
   }, []);
 
+  const statsItems = [
+    { value: animated.calls, label: 'Calls Handled', color: '#C9847A' },
+    { value: animated.bookings, label: 'Bookings', color: '#C9847A' },
+    { value: animated.newClients, label: 'New Clients', color: '#C9847A' },
+    { value: `$${animated.revenue * 300}`, label: 'Est. Revenue', color: '#B8965A' },
+  ];
+
   return (
-    <div className="grid grid-cols-2 gap-2">
-      <div className="bg-warm rounded-lg p-3 text-center border border-border">
-        <div className="font-serif text-2xl font-semibold text-rose leading-none">{animated.calls}</div>
-        <div className="text-[0.6rem] text-text-muted mt-1 font-medium tracking-[0.3px]">Calls Handled</div>
-      </div>
-      <div className="bg-warm rounded-lg p-3 text-center border border-border">
-        <div className="font-serif text-2xl font-semibold text-rose leading-none">{animated.bookings}</div>
-        <div className="text-[0.6rem] text-text-muted mt-1 font-medium tracking-[0.3px]">Bookings</div>
-      </div>
-      <div className="bg-warm rounded-lg p-3 text-center border border-border">
-        <div className="font-serif text-2xl font-semibold text-rose leading-none">{animated.newClients}</div>
-        <div className="text-[0.6rem] text-text-muted mt-1 font-medium tracking-[0.3px]">New Clients</div>
-      </div>
-      <div className="bg-warm rounded-lg p-3 text-center border border-border">
-        <div className="font-serif text-2xl font-semibold text-gold leading-none">${animated.revenue * 300}</div>
-        <div className="text-[0.6rem] text-text-muted mt-1 font-medium tracking-[0.3px]">Est. Revenue</div>
-      </div>
-    </div>
+    <Grid container spacing={1}>
+      {statsItems.map((item, idx) => (
+        <Grid item xs={6} key={idx}>
+          <Box 
+            sx={{ 
+              bgcolor: '#F4EFE8', // warm background
+              borderRadius: 2, 
+              p: 1.5, 
+              textAlign: 'center', 
+              border: '1px solid #E8DDD6',
+              transition: 'all 0.2s',
+              '&:hover': {
+                borderColor: item.color,
+                transform: 'translateY(-1px)',
+              }
+            }}
+          >
+            <Typography 
+              variant="h5" 
+              sx={{ 
+                fontFamily: "'Cormorant Garamond', serif", 
+                fontWeight: 600, 
+                color: item.color,
+                lineHeight: 1,
+              }}
+            >
+              {item.value}
+            </Typography>
+            <Typography 
+              variant="caption" 
+              sx={{ 
+                fontSize: '0.62rem', 
+                color: '#8A7268', 
+                mt: 0.5, 
+                display: 'block',
+                fontWeight: 500,
+                letterSpacing: '0.3px',
+              }}
+            >
+              {item.label}
+            </Typography>
+          </Box>
+        </Grid>
+      ))}
+    </Grid>
   );
 }
