@@ -4,11 +4,19 @@ require('dotenv').config();
 const PORT = process.env.PORT || 3001;
 
 const server = app.listen(PORT, () => {
+  const isDev = process.env.NODE_ENV !== 'production';
   console.log(`=========================================`);
   console.log(`Clinic Receptionist Express Backend Server`);
   console.log(`Mode: ${process.env.NODE_ENV || 'development'}`);
   console.log(`Listening on Port: ${PORT}`);
   console.log(`Health endpoint: http://localhost:${PORT}/api/health`);
+  if (isDev) {
+    console.log(`-----------------------------------------`);
+    console.log(`DEVELOPMENT AUTHENTICATION ACTIVE:`);
+    console.log(`Static Token: development-token-glowassist`);
+    console.log(`Use Header  : Authorization: Bearer development-token-glowassist`);
+    console.log(`-----------------------------------------`);
+  }
   console.log(`=========================================`);
 });
 

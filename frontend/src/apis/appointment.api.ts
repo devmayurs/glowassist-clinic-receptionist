@@ -19,13 +19,18 @@ export const appointmentApi = {
   
   createAppointment: async (appointmentData: {
     client_id?: string;
-    phone_number: string;
-    client_name: string;
-    service_id: string;
+    phone_number?: string;
+    client_name?: string;
+    service_id?: string;
+    service_name: string;
     appointment_date: string;
+    appointment_time: string;
+    payment_method?: string;
+    payment_status?: string;
     provider?: string;
     notes?: string;
     booked_by?: string;
+    booking_source?: string;
   }): Promise<ApiAppointment> => {
     const response = await axiosInstance.post('/appointments', appointmentData);
     return response.data;

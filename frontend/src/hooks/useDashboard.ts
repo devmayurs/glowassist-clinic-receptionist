@@ -119,8 +119,10 @@ export function useDashboard() {
           clientApi.getClients(),
           appointmentApi.getAppointments(),
         ]);
-        const clients = clientsRes.status === 'fulfilled' ? (clientsRes.value || []) : [];
-        const appointments = apptRes.status === 'fulfilled' ? (apptRes.value || []) : [];
+        const clientsRaw = clientsRes.status === 'fulfilled' ? (clientsRes.value || []) : [];
+        const appointmentsRaw = apptRes.status === 'fulfilled' ? (apptRes.value || []) : [];
+        const clients = (clientsRaw as any)?.data || clientsRaw;
+        const appointments = (appointmentsRaw as any)?.data || appointmentsRaw;
         
         if (clients.length || appointments.length) {
           const derived = buildFallbackStats(clients, appointments);
@@ -169,6 +171,14 @@ export function useDashboard() {
     }, 60000);
 
     return () => clearInterval(interval);
+  }, [fetchDashboardStats]);
+
+  useEffect(() => {
+    const handleReload = () => {
+      fetchDashboardStats();
+    };
+    window.addEventListener('appointment-created', handleReload);
+    return () => window.removeEventListener('appointment-created', handleReload);
   }, [fetchDashboardStats]);
 
   return {

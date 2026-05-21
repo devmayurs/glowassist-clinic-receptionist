@@ -66,6 +66,14 @@ export function useAppointments() {
     return () => clearTimeout(t);
   }, [loadAppointments]);
 
+  useEffect(() => {
+    const handleReload = () => {
+      loadAppointments();
+    };
+    window.addEventListener('appointment-created', handleReload);
+    return () => window.removeEventListener('appointment-created', handleReload);
+  }, [loadAppointments]);
+
   // Client-side filter on demo data (fallback/local filtering)
   const filteredAppointments = useMemo(() => {
     return appointments

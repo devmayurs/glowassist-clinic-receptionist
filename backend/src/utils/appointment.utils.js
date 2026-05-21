@@ -98,8 +98,46 @@ function getAvailableSuggestions(dateStr, timeStr, existingAppointments) {
   return suggestions;
 }
 
+/**
+ * Flexibly parses and normalizes a time string (e.g. "12.00pm", "12pm", "3:30 pm", "14:30") 
+ * into a standard 24-hour "HH:MM" format. Returns the input unmodified if it doesn't match
+ * the expected shapes.
+ * @param {string} val 
+ * @returns {string}
+ */
+function parseAndNormalizeTime(val) {
+  if (typeof val !== 'string') return val;
+  
+  // Clean string: lower case, remove spaces
+  const cleaned = val.toLowerCase().replace(/\s+/g, '');
+  
+  // Regex to match formats like: 12:00pm, 12.00pm, 12pm, 12:00, 12.00, 12
+  const match = cleaned.match(/^(\d{1,2})(?:[:.](\d{2}))?(am|pm)?$/);
+  if (!match) return val;
+  
+  let hours = parseInt(match[1], 10);
+  const minutes = match[2] ? parseInt(match[2], 10) : 0;
+  const ampm = match[3];
+  
+  if (hours < 0 || minutes < 0 || minutes > 59) return val;
+  
+  if (ampm) {
+    if (hours < 1 || hours > 12) return val;
+    if (ampm === 'pm' && hours !== 12) {
+      hours += 12;
+    } else if (ampm === 'am' && hours === 12) {
+      hours = 0;
+    }
+  } else {
+    if (hours > 23) return val;
+  }
+  
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+}
+
 module.exports = {
   isWithinWorkingHours,
   normalizeTime,
+  parseAndNormalizeTime,
   getAvailableSuggestions
 };

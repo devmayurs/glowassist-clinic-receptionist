@@ -2,6 +2,7 @@ const express = require('express');
 const { body, param } = require('express-validator');
 const appointmentController = require('../controllers/appointment.controller');
 const { authenticateToken } = require('../middleware/auth');
+const { parseAndNormalizeTime } = require('../utils/appointment.utils');
 
 const router = express.Router();
 
@@ -69,10 +70,12 @@ router.post(
 
     body('appointmentTime')
       .optional()
+      .customSanitizer(parseAndNormalizeTime)
       .matches(/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/)
       .withMessage('appointmentTime must be in HH:MM or HH:MM:SS format'),
     body('appointment_time')
       .optional()
+      .customSanitizer(parseAndNormalizeTime)
       .matches(/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/)
       .withMessage('appointment_time must be in HH:MM or HH:MM:SS format'),
 
@@ -114,12 +117,12 @@ router.post(
     body('notes').optional().trim(),
     body('bookingSource')
       .optional()
-      .isIn(['whatsapp_ai', 'manual_crm', 'live_chat'])
-      .withMessage('bookingSource must be whatsapp_ai, manual_crm, or live_chat'),
+      .isIn(['whatsapp_ai', 'manual_crm', 'live_chat', 'instagram'])
+      .withMessage('bookingSource must be whatsapp_ai, manual_crm, live_chat, or instagram'),
     body('booking_source')
       .optional()
-      .isIn(['whatsapp_ai', 'manual_crm', 'live_chat'])
-      .withMessage('booking_source must be whatsapp_ai, manual_crm, or live_chat')
+      .isIn(['whatsapp_ai', 'manual_crm', 'live_chat', 'instagram'])
+      .withMessage('booking_source must be whatsapp_ai, manual_crm, live_chat, or instagram')
   ],
   appointmentController.createAppointment
 );
@@ -152,10 +155,12 @@ router.put(
 
     body('newTime')
       .optional()
+      .customSanitizer(parseAndNormalizeTime)
       .matches(/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/)
       .withMessage('newTime must be in HH:MM or HH:MM:SS format'),
     body('new_time')
       .optional()
+      .customSanitizer(parseAndNormalizeTime)
       .matches(/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/)
       .withMessage('new_time must be in HH:MM or HH:MM:SS format'),
 

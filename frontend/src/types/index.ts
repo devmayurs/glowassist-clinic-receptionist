@@ -71,7 +71,7 @@ export interface N8nChatResponse {
 // ── API / CRM types (Step 5 — real backend data) ─────────────────────────────
 
 export type ClientType = 'first_time' | 'regular' | 'vip';
-export type BookingSource = 'whatsapp_ai' | 'live_chat' | 'manual_crm' | 'walk_in';
+export type BookingSource = 'whatsapp_ai' | 'live_chat' | 'manual_crm' | 'walk_in' | 'instagram';
 export type AppointmentStatus = 'scheduled' | 'completed' | 'cancelled' | 'rescheduled' | 'no_show';
 export type PaymentStatus = 'pending' | 'partial' | 'paid' | 'refunded';
 

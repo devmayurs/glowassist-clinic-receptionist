@@ -85,16 +85,16 @@ function SourceBadge({ source }: { source: BookingSource }) {
           display: 'inline-flex', 
           alignItems: 'center', 
           gap: 0.5, 
-          bgcolor: 'rgba(201, 132, 122, 0.1)', 
-          color: '#C9847A', 
-          fontSize: '0.6rem', 
+          bgcolor: 'rgba(122, 158, 126, 0.15)', // Sage/whatsapp green
+          color: '#7A9E7E', 
+          fontSize: '0.65rem', 
           fontWeight: 700, 
           px: 1, 
           py: 0.25, 
-          borderRadius: 1 
+          borderRadius: 1.5 
         }}
       >
-        ✦ AI
+        ✦ WhatsApp AI
       </Box>
     );
   }
@@ -106,23 +106,58 @@ function SourceBadge({ source }: { source: BookingSource }) {
           display: 'inline-flex', 
           alignItems: 'center', 
           gap: 0.5, 
-          bgcolor: 'rgba(122, 158, 126, 0.1)', 
-          color: '#7A9E7E', 
-          fontSize: '0.6rem', 
+          bgcolor: 'rgba(201, 132, 122, 0.15)', // Premium rose
+          color: '#C9847A', 
+          fontSize: '0.65rem', 
           fontWeight: 700, 
           px: 1, 
           py: 0.25, 
-          borderRadius: 1 
+          borderRadius: 1.5 
         }}
       >
-        💬 Chat
+        💬 Live Chat
+      </Box>
+    );
+  }
+  if (source === 'instagram') {
+    return (
+      <Box 
+        component="span" 
+        sx={{ 
+          display: 'inline-flex', 
+          alignItems: 'center', 
+          gap: 0.5, 
+          bgcolor: 'rgba(225, 48, 108, 0.1)', // Instagram pink
+          color: '#E1306C', 
+          fontSize: '0.65rem', 
+          fontWeight: 700, 
+          px: 1, 
+          py: 0.25, 
+          borderRadius: 1.5 
+        }}
+      >
+        📸 Instagram
       </Box>
     );
   }
   return (
-    <Typography variant="caption" sx={{ fontSize: '0.68rem', color: 'text.secondary' }}>
-      👤 Manual
-    </Typography>
+    <Box 
+      component="span" 
+      sx={{ 
+        display: 'inline-flex', 
+        alignItems: 'center', 
+        gap: 0.5, 
+        bgcolor: 'rgba(138, 114, 104, 0.15)', // Muted brown
+        color: '#8A7268', 
+        fontSize: '0.65rem', 
+        fontWeight: 700, 
+        px: 1, 
+        py: 0.25, 
+        borderRadius: 1.5 
+      }}
+    >
+      👤 Manual CRM
+    </Box>
   );
 }
 

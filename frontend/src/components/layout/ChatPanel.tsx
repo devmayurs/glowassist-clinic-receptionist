@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Box, Typography, Paper, Avatar, Button, TextField, IconButton } from '@mui/material';
 import { useAppStore } from '../../store/useAppStore';
 import { useChat } from '../../hooks/useChat';
@@ -12,16 +12,32 @@ export default function ChatPanel() {
     inputText,
     setInputText,
     sendMessage,
+    bookingStage,
+    resetBooking,
   } = useChat();
 
   const isCallActive = useAppStore((s) => s.isCallActive);
   const chatBoxRef = useRef<HTMLDivElement>(null);
 
+  // Sync expanded state with localStorage
+  const [isExpanded, setIsExpanded] = useState<boolean>(() => {
+    const saved = localStorage.getItem('glowassist_chat_panel_expanded');
+    return saved === null ? true : saved === 'true';
+  });
+
+  const toggleExpand = () => {
+    setIsExpanded((prev) => {
+      const next = !prev;
+      localStorage.setItem('glowassist_chat_panel_expanded', String(next));
+      return next;
+    });
+  };
+
   useEffect(() => {
     if (chatBoxRef.current) {
       chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
     }
-  }, [messages, isTyping]);
+  }, [messages, isTyping, isExpanded]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -38,30 +54,102 @@ export default function ChatPanel() {
   };
 
   const quickReplies = [
-    { label: '💉 Botox', text: 'I want to book a Botox appointment' },
+    bookingStage === 'none' 
+      ? { label: '📅 Book Now', text: 'I want to book an appointment' }
+      : { label: '❌ Cancel Booking', text: 'cancel' },
+    { label: '💉 Botox', text: 'Tell me about Botox Aesthetic sessions' },
     { label: '✨ Facials', text: 'Tell me about your facial treatments' },
     { label: '💰 Pricing', text: 'What are your prices?' },
-    { label: '🎁 Memberships', text: 'Do you have membership packages?' },
-    { label: '🕐 Hours', text: 'What are your hours?' },
+    { label: '🕐 Hours', text: 'What are your working hours?' },
   ];
 
+  // Minimized state renders as a compact, luxury pill
+  if (!isExpanded) {
+    return (
+      <Paper
+        elevation={4}
+        onClick={toggleExpand}
+        sx={{
+          position: 'fixed',
+          bottom: 24,
+          right: 24,
+          zIndex: 1200,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.5,
+          px: 3,
+          py: 1.75,
+          borderRadius: 30,
+          cursor: 'pointer',
+          background: 'linear-gradient(135deg, #C9847A 0%, #B8965A 100%)',
+          color: '#FFFFFF',
+          boxShadow: '0 8px 32px rgba(201, 132, 122, 0.28)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          '&:hover': {
+            transform: 'translateY(-3px) scale(1.02)',
+            boxShadow: '0 12px 40px rgba(201, 132, 122, 0.38)',
+          },
+        }}
+      >
+        <Avatar
+          sx={{
+            width: 32,
+            height: 32,
+            bgcolor: 'rgba(255, 255, 255, 0.2)',
+            color: '#FFFFFF',
+            fontSize: '0.95rem',
+            fontWeight: 700
+          }}
+        >
+          ✦
+        </Avatar>
+        <Box>
+          <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.88rem', letterSpacing: '0.5px', fontFamily: "'Jost', sans-serif" }}>
+            Chat with Aria
+          </Typography>
+          <Typography sx={{ fontSize: '0.68rem', color: 'rgba(255, 255, 255, 0.85)', fontWeight: 500 }}>
+            Online AI Concierge
+          </Typography>
+        </Box>
+      </Paper>
+    );
+  }
+
+  // Expanded state renders as a gorgeous luxury card
   return (
-    <Box 
-      component="aside"
-      sx={{ 
-        width: 370, 
-        borderLeft: '1px solid #E8DDD6', 
-        bgcolor: '#FFFFFF', 
-        display: 'flex', 
-        flexDirection: 'column', 
-        height: '100%',
-        minWidth: 370,
+    <Paper
+      elevation={6}
+      sx={{
+        position: 'fixed',
+        bottom: 24,
+        right: 24,
+        zIndex: 1200,
+        width: 380,
+        height: 600,
+        border: '1px solid #E8DDD6',
+        bgcolor: '#FFFFFF',
+        display: 'flex',
+        flexDirection: 'column',
+        borderRadius: 4,
+        overflow: 'hidden',
+        boxShadow: '0 16px 48px rgba(42, 31, 26, 0.16)',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
       }}
     >
       {isCallActive && <CallBanner />}
 
       {/* Header */}
-      <Box sx={{ p: 2, borderBottom: '1px solid #E8DDD6', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+      <Box 
+        sx={{ 
+          p: 2, 
+          borderBottom: '1px solid #E8DDD6', 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 1.5,
+          background: 'linear-gradient(135deg, #FAF8F5 0%, #FFFFFF 100%)',
+        }}
+      >
         <Avatar
           sx={{
             width: 40,
@@ -74,8 +162,8 @@ export default function ChatPanel() {
         >
           ✦
         </Avatar>
-        <Box>
-          <Typography variant="subtitle2" sx={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 600, color: '#1C1410', fontSize: '1rem' }}>
+        <Box sx={{ flex: 1 }}>
+          <Typography variant="subtitle2" sx={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, color: '#1C1410', fontSize: '1.1rem' }}>
             Aria — AI Concierge
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -89,6 +177,16 @@ export default function ChatPanel() {
           </Box>
         </Box>
         <ModeToggle />
+        <IconButton 
+          onClick={toggleExpand}
+          size="small"
+          sx={{ 
+            color: '#8A7268',
+            '&:hover': { bgcolor: '#FAF8F5' }
+          }}
+        >
+          ➖
+        </IconButton>
       </Box>
 
       {/* Messages */}
@@ -109,7 +207,6 @@ export default function ChatPanel() {
           return (
             <Box 
               key={msg.id} 
-              className="animate-slideUp"
               sx={{ 
                 display: 'flex', 
                 gap: 1, 
@@ -192,9 +289,9 @@ export default function ChatPanel() {
                 boxShadow: 'none',
               }}
             >
-              <Box className="animate-bounce" sx={{ width: 5, height: 5, bgcolor: '#8A7268', borderRadius: '50%' }} />
-              <Box className="animate-bounce" sx={{ width: 5, height: 5, bgcolor: '#8A7268', borderRadius: '50%', animationDelay: '0.2s' }} />
-              <Box className="animate-bounce" sx={{ width: 5, height: 5, bgcolor: '#8A7268', borderRadius: '50%', animationDelay: '0.4s' }} />
+              <Box sx={{ width: 5, height: 5, bgcolor: '#8A7268', borderRadius: '50%', animation: 'bounce 1s infinite' }} />
+              <Box sx={{ width: 5, height: 5, bgcolor: '#8A7268', borderRadius: '50%', animation: 'bounce 1s infinite', animationDelay: '0.2s' }} />
+              <Box sx={{ width: 5, height: 5, bgcolor: '#8A7268', borderRadius: '50%', animation: 'bounce 1s infinite', animationDelay: '0.4s' }} />
             </Paper>
           </Box>
         )}
@@ -216,7 +313,14 @@ export default function ChatPanel() {
           <Button
             key={btn.text}
             variant="outlined"
-            onClick={() => sendMessage(btn.text)}
+            onClick={() => {
+              if (btn.text === 'cancel') {
+                resetBooking();
+                sendMessage('Booking cancelled. How else can I assist you?');
+              } else {
+                sendMessage(btn.text);
+              }
+            }}
             sx={{
               borderRadius: '16px',
               fontSize: '0.7rem',
@@ -243,7 +347,7 @@ export default function ChatPanel() {
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Type a client message…"
+          placeholder={bookingStage !== 'none' ? `Enter ${bookingStage}…` : "Type a client message…"}
           multiline
           maxRows={3}
           variant="outlined"
@@ -280,6 +384,6 @@ export default function ChatPanel() {
           ➤
         </IconButton>
       </Box>
-    </Box>
+    </Paper>
   );
 }

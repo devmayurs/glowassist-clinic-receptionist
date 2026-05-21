@@ -26,7 +26,10 @@ const createClient = async (req, res) => {
       return res.status(409).json({
         status: 'error',
         message: 'Client with this phone number already exists',
-        data: existingClient
+        data: {
+          ...existingClient,
+          name: existingClient.full_name
+        }
       });
     }
 
@@ -50,7 +53,10 @@ const createClient = async (req, res) => {
     return res.status(201).json({
       status: 'success',
       message: 'Client created successfully',
-      data: newClient
+      data: {
+        ...newClient,
+        name: newClient.full_name
+      }
     });
   } catch (error) {
     console.error('Error in createClient:', error.message);
@@ -92,9 +98,14 @@ const getClients = async (req, res) => {
     const { data: clientsList, count, error } = await query;
     if (error) throw error;
 
+    const mappedList = (clientsList || []).map(c => ({
+      ...c,
+      name: c.full_name
+    }));
+
     return res.status(200).json({
       status: 'success',
-      data: clientsList,
+      data: mappedList,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
@@ -147,7 +158,10 @@ const updateClient = async (req, res) => {
     return res.status(200).json({
       status: 'success',
       message: 'Client updated successfully',
-      data: updatedClient
+      data: {
+        ...updatedClient,
+        name: updatedClient.full_name
+      }
     });
   } catch (error) {
     console.error('Error in updateClient:', error.message);
@@ -188,7 +202,26 @@ const getClientById = async (req, res) => {
 
     if (appointmentsError) throw appointmentsError;
 
-    client.appointments = appointmentsList || [];
+    client.name = client.full_name;
+
+    // Normalize client historical appointments to ApiAppointment shape
+    const normalizedAppts = (appointmentsList || []).map(a => ({
+      id: a.id,
+      client_id: a.client_id,
+      client_name: client.full_name,
+      phone_number: client.phone_number,
+      service_name: a.service_name,
+      service_price: a.service_price,
+      appointment_date: `${a.appointment_date}T${a.appointment_time || '00:00:00'}`,
+      status: a.status,
+      payment_status: a.payment_status,
+      booked_by: a.booking_source,
+      google_event_id: a.google_calendar_event_id,
+      notes: a.notes,
+      created_at: a.created_at,
+    }));
+
+    client.appointments = normalizedAppts;
 
     return res.status(200).json({
       status: 'success',

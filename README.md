@@ -107,6 +107,11 @@ cd glowassist-clinic-receptionist
    👉 **[`database/schema.sql`](file:///d:/Mayur/n8n%20projects/clinic%20receptionist/database/schema.sql)**
 5. Click **Run** to execute the query. This builds the 7 tables, sets up indices, creates row-level security (RLS) policies, and seeds dynamic spa services (Gel Manicure, Pedicure, Botox, Dermal Fillers) and staff records.
 
+> [!IMPORTANT]
+> **Updating an Existing Database:**
+> If you have an existing database schema already deployed on Supabase, you must run the update script **[`database/update_booking_source.sql`](file:///d:/Mayur/n8n%20projects/clinic%20receptionist/database/update_booking_source.sql)** in the Supabase SQL Editor. This drops the old `booking_source` check constraints on the `clients` and `appointments` tables and recreates them to allow `'instagram'` along with the other channels.
+
+
 ---
 
 ### Step 3: Backend Setup

@@ -22,6 +22,7 @@ const SOURCE_MAP: Record<BookingSource, { bg: string; text: string; label: strin
   live_chat: { bg: 'rgba(122, 158, 126, 0.1)', text: '#7A9E7E', label: '💬 Live Chat' },
   manual_crm: { bg: '#FAF8F5', text: '#8A7268', label: '👤 Manual' },
   walk_in: { bg: 'rgba(184, 150, 90, 0.1)', text: '#B8965A', label: '🚶 Walk-in' },
+  instagram: { bg: 'rgba(225, 48, 108, 0.1)', text: '#E1306C', label: '📸 Instagram' },
 };
 
 interface ClientHistoryDrawerProps {

@@ -43,4 +43,5 @@ export const BOOKING_SOURCE_LABELS: Record<BookingSource, string> = {
   live_chat: 'Live Chat',
   manual_crm: 'Manual CRM',
   walk_in: 'Walk-In',
+  instagram: 'Instagram',
 };

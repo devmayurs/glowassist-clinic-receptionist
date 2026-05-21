@@ -166,7 +166,13 @@ const createAppointment = async (req, res) => {
     return res.status(201).json({
       status: 'success',
       message: 'Appointment scheduled successfully',
-      data: newAppointment
+      data: {
+        ...newAppointment,
+        client_name: client.full_name,
+        phone_number: client.phone_number,
+        appointment_date: `${newAppointment.appointment_date}T${newAppointment.appointment_time || '00:00:00'}`,
+        booked_by: newAppointment.booking_source,
+      }
     });
   } catch (error) {
     console.error('Error in createAppointment:', error.message);
@@ -281,6 +287,13 @@ const rescheduleAppointment = async (req, res) => {
 
     if (updateError) throw updateError;
 
+    // Fetch client for name/phone normalization
+    const { data: client } = await supabase
+      .from('clients')
+      .select('full_name, phone_number')
+      .eq('id', updatedAppointment.client_id)
+      .single();
+
     // 6. Create Audit Log Entry
     await supabase.from('appointment_logs').insert({
       appointment_id: id,
@@ -293,7 +306,13 @@ const rescheduleAppointment = async (req, res) => {
     return res.status(200).json({
       status: 'success',
       message: 'Appointment rescheduled successfully',
-      data: updatedAppointment
+      data: {
+        ...updatedAppointment,
+        client_name: client?.full_name || 'Unknown',
+        phone_number: client?.phone_number || '',
+        appointment_date: `${updatedAppointment.appointment_date}T${updatedAppointment.appointment_time || '00:00:00'}`,
+        booked_by: updatedAppointment.booking_source,
+      }
     });
   } catch (error) {
     console.error('Error in rescheduleAppointment:', error.message);
@@ -354,6 +373,13 @@ const cancelAppointment = async (req, res) => {
 
     if (updateError) throw updateError;
 
+    // Fetch client for name/phone normalization
+    const { data: client } = await supabase
+      .from('clients')
+      .select('full_name, phone_number')
+      .eq('id', updatedAppointment.client_id)
+      .single();
+
     // 4. Create Audit Log Entry
     await supabase.from('appointment_logs').insert({
       appointment_id: id,
@@ -366,7 +392,13 @@ const cancelAppointment = async (req, res) => {
     return res.status(200).json({
       status: 'success',
       message: 'Appointment cancelled successfully',
-      data: updatedAppointment
+      data: {
+        ...updatedAppointment,
+        client_name: client?.full_name || 'Unknown',
+        phone_number: client?.phone_number || '',
+        appointment_date: `${updatedAppointment.appointment_date}T${updatedAppointment.appointment_time || '00:00:00'}`,
+        booked_by: updatedAppointment.booking_source,
+      }
     });
   } catch (error) {
     console.error('Error in cancelAppointment:', error.message);
@@ -411,9 +443,26 @@ const getAppointments = async (req, res) => {
 
     if (error) throw error;
 
+    // Normalize appointments to ApiAppointment shape the frontend expects
+    const normalizedList = (appointmentsList || []).map(a => ({
+      id: a.id,
+      client_id: a.client_id,
+      client_name: a.clients?.full_name || 'Unknown',
+      phone_number: a.clients?.phone_number || '',
+      service_name: a.service_name,
+      service_price: a.service_price,
+      appointment_date: `${a.appointment_date}T${a.appointment_time || '00:00:00'}`,
+      status: a.status,
+      payment_status: a.payment_status,
+      booked_by: a.booking_source,
+      google_event_id: a.google_calendar_event_id,
+      notes: a.notes,
+      created_at: a.created_at,
+    }));
+
     return res.status(200).json({
       status: 'success',
-      data: appointmentsList || []
+      data: normalizedList
     });
   } catch (error) {
     console.error('Error in getAppointments:', error.message);

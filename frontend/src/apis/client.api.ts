@@ -17,12 +17,12 @@ export const clientApi = {
     return response.data;
   },
   
-  createClient: async (clientData: Partial<ApiClient>): Promise<ApiClient> => {
+  createClient: async (clientData: any): Promise<ApiClient> => {
     const response = await axiosInstance.post('/clients', clientData);
     return response.data;
   },
   
-  updateClient: async (id: string, clientData: Partial<ApiClient>): Promise<ApiClient> => {
+  updateClient: async (id: string, clientData: any): Promise<ApiClient> => {
     const response = await axiosInstance.put(`/clients/${id}`, clientData);
     return response.data;
   },

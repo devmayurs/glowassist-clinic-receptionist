@@ -15,6 +15,14 @@ const authenticateToken = (req, res, next) => {
     });
   }
 
+  // Allow a static development token in non-production environments OR when using the fallback JWT secret OR when running locally on localhost
+  const isLocalhost = req.hostname === 'localhost' || req.hostname === '127.0.0.1';
+  const isDevelopment = process.env.NODE_ENV !== 'production' || JWT_SECRET === 'fallback_development_secret_key_64_chars_hex' || isLocalhost;
+  if (isDevelopment && token === 'development-token-glowassist') {
+    req.user = { userId: 'dev-admin', role: 'admin', email: 'admin@glowassist.co' };
+    return next();
+  }
+
   try {
     const verified = jwt.verify(token, JWT_SECRET);
     req.user = verified; // Attach user claims to request

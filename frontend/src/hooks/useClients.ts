@@ -19,7 +19,6 @@ export function useClients() {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [sourceFilter, setSourceFilter] = useState<string>('all');
   const [selectedClient, setSelectedClient] = useState<ApiClient | null>(null);
-
   const loadClients = useCallback(async () => {
     setLoading(true);
     try {
@@ -28,7 +27,7 @@ export function useClients() {
         type: typeFilter !== 'all' ? typeFilter : undefined,
         source: sourceFilter !== 'all' ? sourceFilter : undefined,
       });
-      const data: ApiClient[] = res || [];
+      const data: ApiClient[] = (res as any)?.data || res || [];
       setClients(data.length ? data : DEMO_CLIENTS);
     } catch {
       setClients(DEMO_CLIENTS);
@@ -43,6 +42,14 @@ export function useClients() {
       loadClients();
     }, 300);
     return () => clearTimeout(t);
+  }, [loadClients]);
+
+  useEffect(() => {
+    const handleReload = () => {
+      loadClients();
+    };
+    window.addEventListener('appointment-created', handleReload);
+    return () => window.removeEventListener('appointment-created', handleReload);
   }, [loadClients]);
 
   // Client-side local filtering fallback

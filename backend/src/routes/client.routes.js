@@ -30,8 +30,8 @@ router.post(
       .withMessage('Client type must be first_time, regular, or vip'),
     body('bookingSource')
       .optional()
-      .isIn(['whatsapp_ai', 'manual_crm', 'live_chat'])
-      .withMessage('Booking source must be whatsapp_ai, manual_crm, or live_chat'),
+      .isIn(['whatsapp_ai', 'manual_crm', 'live_chat', 'instagram'])
+      .withMessage('Booking source must be whatsapp_ai, manual_crm, live_chat, or instagram'),
     body('notes').optional().trim()
   ],
   clientController.createClient
@@ -64,8 +64,8 @@ router.put(
       .withMessage('Client type must be first_time, regular, or vip'),
     body('bookingSource')
       .optional()
-      .isIn(['whatsapp_ai', 'manual_crm', 'live_chat'])
-      .withMessage('Booking source must be whatsapp_ai, manual_crm, or live_chat'),
+      .isIn(['whatsapp_ai', 'manual_crm', 'live_chat', 'instagram'])
+      .withMessage('Booking source must be whatsapp_ai, manual_crm, live_chat, or instagram'),
     body('notes').optional().trim()
   ],
   clientController.updateClient

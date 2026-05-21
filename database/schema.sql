@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS clients (
   phone_number TEXT UNIQUE NOT NULL, -- Indexed for rapid WhatsApp lookups
   email TEXT,
   client_type TEXT NOT NULL DEFAULT 'first_time' CHECK (client_type IN ('first_time', 'regular', 'vip')),
-  booking_source TEXT NOT NULL DEFAULT 'whatsapp_ai' CHECK (booking_source IN ('whatsapp_ai', 'manual_crm', 'live_chat')),
+  booking_source TEXT NOT NULL DEFAULT 'whatsapp_ai' CHECK (booking_source IN ('whatsapp_ai', 'manual_crm', 'live_chat', 'instagram')),
   total_bookings INTEGER DEFAULT 0 CHECK (total_bookings >= 0),
   notes TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS appointments (
   payment_method TEXT NOT NULL DEFAULT 'unpaid' CHECK (payment_method IN ('cash', 'card', 'online', 'unpaid')),
   payment_status TEXT NOT NULL DEFAULT 'pending' CHECK (payment_status IN ('pending', 'partial', 'paid', 'refunded')),
   google_calendar_event_id TEXT, -- Synced Google Calendar Event reference
-  booking_source TEXT NOT NULL DEFAULT 'whatsapp_ai' CHECK (booking_source IN ('whatsapp_ai', 'manual_crm', 'live_chat')),
+  booking_source TEXT NOT NULL DEFAULT 'whatsapp_ai' CHECK (booking_source IN ('whatsapp_ai', 'manual_crm', 'live_chat', 'instagram')),
   staff_id UUID REFERENCES staff(id) ON DELETE SET NULL, -- Assigned technician (optional)
   notes TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
@@ -179,3 +179,14 @@ INSERT INTO staff (full_name, role) VALUES
   ('Beautician Lisa', 'nail_artist'),
   ('Dr. Reeves', 'aesthetic_physician')
 ON CONFLICT DO NOTHING;
+
+-- =========================================================================
+-- 6. MIGRATION UPGRADE ALTERS (Idempotent updates for existing tables)
+-- =========================================================================
+
+-- Drop legacy check constraints and update to include 'instagram'
+ALTER TABLE clients DROP CONSTRAINT IF EXISTS clients_booking_source_check;
+ALTER TABLE clients ADD CONSTRAINT clients_booking_source_check CHECK (booking_source IN ('whatsapp_ai', 'manual_crm', 'live_chat', 'instagram'));
+
+ALTER TABLE appointments DROP CONSTRAINT IF EXISTS appointments_booking_source_check;
+ALTER TABLE appointments ADD CONSTRAINT appointments_booking_source_check CHECK (booking_source IN ('whatsapp_ai', 'manual_crm', 'live_chat', 'instagram'));
