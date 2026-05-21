@@ -71,7 +71,7 @@ async function createEvent(appointmentData) {
     const response = await calendar.events.insert({
       calendarId: 'primary',
       requestBody: {
-        summary: `Westhill Nails Appointment - ${clientName}`,
+        summary: `Lumière Med Spa — ${serviceName} (${clientName})`,
         description: descriptionText,
         start: {
           dateTime: startDateTime,

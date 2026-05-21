@@ -7,6 +7,7 @@ require('dotenv').config();
 const clientRoutes = require('./routes/client.routes');
 const appointmentRoutes = require('./routes/appointment.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
+const conversationRoutes = require('./routes/conversation.routes');
 
 const app = express();
 
@@ -77,6 +78,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/clients', clientRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/conversations', conversationRoutes);
 
 // 7. Fallback for undefined routes (404 Handler)
 app.use((req, res, next) => {

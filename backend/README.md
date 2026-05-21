@@ -1,6 +1,6 @@
 # GlowAssist AI — Express.js Backend API Service
 
-This is the secure Node.js & Express.js REST API service for the Westhill Nails & Spa Clinic Receptionist. It serves as the bridge between the n8n WhatsApp conversational flows, the Supabase database layer, and the Google Calendar work environment.
+This is the secure Node.js & Express.js REST API service for **Lumière Med Spa** — GlowAssist AI Clinic Receptionist. It serves as the bridge between the n8n WhatsApp conversational flows, the Supabase database layer, and the Google Calendar work environment.
 
 ---
 

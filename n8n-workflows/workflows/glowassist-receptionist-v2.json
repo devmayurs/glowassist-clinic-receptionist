@@ -131,7 +131,7 @@
         "promptType": "define",
         "text": "={{ $('WhatsApp Trigger1').item.json.messages[0].text.body }}",
         "options": {
-          "systemMessage": "You are a friendly and professional assistant for Westhill Nails & Spa (westhillnails.ca), a premier nail salon and spa located in Canada. Your goal is to help customers learn about our services, pricing, hours, location, and to answer questions about nail care. If a customer wants to book an appointment, direct them to our website or provide our contact information.\n\nKey Information About Westhill Nails & Spa:\nWe specialize in:\n- Manicures (Basic, Deluxe, Eco-friendly, Spa manicures)\n- Pedicures (Basic, Deluxe, Spa pedicures with hot stones)\n- Gel Nails and Gel Polish upgrades\n- Acrylic Nails (full sets, fill-ins, French tips)\n- Dipping Powder (SNS) Nails\n- Gel X Extensions\n- Nail Art and custom designs\n- Waxing services (face, lips, and body)\n- Skincare treatments\n- Eyelash extensions\n- Permanent makeup\n- Lash lift and tint\n- Brow lamination and tint\n\nServices Highlights:\n- Our services include paraffin treatments, hot stone massage, foot massage, hand massage\n- Eco-friendly and cruelty-free products available\n- Professional, experienced nail technicians\n- Clean and welcoming environment\n- Affordable pricing with various service packages\n\nContact & Hours:\n- Website: westhillnails.ca\n- Monday to Saturday: 9:00 AM - 7:00 PM\n- Sunday: 10:00 AM - 5:00 PM\n- First-time customers receive a 10% discount\n- Senior citizens get 10% off on Mondays and Tuesdays by appointment\n- Referral program: Earn $10 reward for each referral\n\nBe helpful, friendly, and professional. If you don't know something specific, ask the customer to visit our website or contact us directly. Always encourage customers to book appointments and provide positive recommendations about our services."
+          "systemMessage": "You are a friendly and professional AI receptionist for Lumière Med Spa, a premier medical spa and aesthetic clinic. Your goal is to help clients learn about our services, pricing, working hours, location, and to guide them through booking appointments.\n\nKey Information About Lumière Med Spa:\nWe specialize in:\n- Gel Manicure Deluxe ($45, 45 min)\n- Luxury Pedicure ($60, 60 min)\n- Full Gel Nail Extensions ($85, 75 min)\n- Botox Aesthetic Session — Forehead ($350, 30 min)\n- Lip Dermal Filler Session ($480, 45 min)\n\nOur Expert Team:\n- Esthetician Maya — Manicure & nail specialist\n- Beautician Lisa — Nail art specialist\n- Dr. Reeves — Aesthetic physician (Botox & fillers)\n\nContact & Hours:\n- Address: 45 Blossom Avenue, Suite 200\n- Phone: (555) 784-2301\n- Monday to Saturday: 9:00 AM - 7:00 PM\n- Sunday: 10:00 AM - 5:00 PM\n\nBe warm, professional, and concise. If a client wants to book, guide them through the booking process by asking for their name, preferred service, date, and time. Always confirm appointment details before finalising."
         }
       },
       "id": "34bce834-3a96-4f36-a1b3-1158c5663c66",
@@ -145,7 +145,7 @@
     },
     {
       "parameters": {
-        "memoryKey": "whatsapp-westhill-nails"
+        "memoryKey": "whatsapp-lumiere-medspa"
       },
       "id": "e88a77ee-1d67-48a7-abd9-643f0f62ca7f",
       "name": "Services Catalogue",
@@ -161,7 +161,7 @@
         "operation": "send",
         "phoneNumberId": "1093698253829228",
         "recipientPhoneNumber": "={{ $('WhatsApp Trigger1').item.json.messages[0].from }}",
-        "textBody": "Thanks for reaching out to Westhill Nails & Spa! 💅 I'm unable to process non-text messages at the moment. Please send your message as text so I can better assist you. You can also visit our website at westhillnails.ca or message us directly. Thank you!",
+        "textBody": "Thanks for reaching out to Lumière Med Spa! 🌸 I'm unable to process non-text messages at the moment. Please send your message as text so I can better assist you. You can also call us at (555) 784-2301 or visit us at 45 Blossom Avenue, Suite 200. Thank you!",
         "additionalFields": {
           "previewUrl": false
         }
@@ -211,7 +211,7 @@
     {
       "parameters": {
         "name": "query_services_info",
-        "description": "Call this tool to query detailed information about Westhill Nails & Spa services, pricing, hours, and booking information."
+        "description": "Call this tool to query detailed information about Lumière Med Spa services, pricing, working hours, and booking information."
       },
       "id": "2d214230-c116-4724-a42e-d3eb5b27d732",
       "name": "Services Info Tool",
@@ -225,7 +225,7 @@
     {
       "parameters": {
         "sessionIdType": "customKey",
-        "sessionKey": "=whatsapp-westhill-{{ $json.messages[0].from }}"
+        "sessionKey": "=whatsapp-lumiere-{{ $json.messages[0].from }}"
       },
       "id": "94e26372-a237-4098-8bfa-f92e2b3e51ce",
       "name": "Conversation Memory",
@@ -493,7 +493,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const { session, phone } = $input.first().json;\n\n// Checking the missing fields sequentially\nlet missingField = null;\nlet promptMessage = '';\n\nif (!session.fullName) {\n  missingField = 'fullName';\n  promptMessage = \"Thank you! I'd love to help you book an appointment. Could you please share your full name first?\";\n} else if (!session.serviceName) {\n  missingField = 'serviceName';\n  promptMessage = `Hi ${session.fullName}! What treatment or service would you like to book? (We offer Gel Manicures, Luxury Pedicures, Gel Extensions, Botox sessions, and Lip Fillers!)`;\n} else if (!session.preferredDate) {\n  missingField = 'preferredDate';\n  promptMessage = `Got it! A ${session.serviceName}. What date would you prefer for your visit? (e.g. YYYY-MM-DD, tomorrow, or this Saturday)`;\n} else if (!session.preferredTime) {\n  missingField = 'preferredTime';\n  promptMessage = \"And what time fits your schedule? Mon-Sat 9AM-7PM, Sun 10AM-5PM. (e.g., 2:30 PM, 11:00 AM)\";\n}\n\nconst isComplete = !missingField;\n\nreturn [{ json: { isComplete, missingField, promptMessage, session, phone } }];"
+        "jsCode": "const { session, phone } = $input.first().json;\n\n// Checking the missing fields sequentially\nlet missingField = null;\nlet promptMessage = '';\n\nif (!session.fullName) {\n  missingField = 'fullName';\n  promptMessage = \"Thank you for reaching out to Lumière Med Spa! 🌸 I'd love to help you book an appointment. Could you please share your full name first?\";\n} else if (!session.serviceName) {\n  missingField = 'serviceName';\n  promptMessage = `Hi ${session.fullName}! ✨ What treatment would you like to book?\\n\\nOur services:\\n💅 Gel Manicure Deluxe — $45\\n🦶 Luxury Pedicure — $60\\n💎 Full Gel Nail Extensions — $85\\n💉 Botox Aesthetic Session — $350\\n👄 Lip Dermal Filler Session — $480\\n\\nJust type the name of the treatment you'd like!`;\n} else if (!session.preferredDate) {\n  missingField = 'preferredDate';\n  promptMessage = `Got it! A ${session.serviceName}. 📅 What date would you prefer for your visit? (e.g. YYYY-MM-DD, tomorrow, or this Saturday)`;\n} else if (!session.preferredTime) {\n  missingField = 'preferredTime';\n  promptMessage = \"And what time fits your schedule? 🕒\\nWe're open Mon–Sat 9:00 AM–7:00 PM and Sunday 10:00 AM–5:00 PM.\\n(e.g., 2:30 PM, 11:00 AM)\";\n}\n\nconst isComplete = !missingField;\n\nreturn [{ json: { isComplete, missingField, promptMessage, session, phone } }];"
       },
       "id": "node-questionnaire-state",
       "name": "Collect User Details Node",
@@ -683,7 +683,7 @@
         "operation": "send",
         "phoneNumberId": "1093698253829228",
         "recipientPhoneNumber": "={{ $('Collect User Details Node').item.json.phone }}",
-        "textBody": "=🎉 Congratulations! Your appointment at Westhill Nails & Spa is confirmed! ✨\\n\\n💅 Service: {{ $json.data.service_name }}\\n📅 Date: {{ $json.data.appointment_date }}\\n🕒 Time: {{ $json.data.appointment_time }}\\n💳 Payment: Cash (Pending)\\n📍 Address: 123 Salon Way, Westhill Nails\\n\\nSee you soon! 🌸",
+        "textBody": "=🎉 Your appointment at *Lumière Med Spa* is confirmed! ✨\\n\\n💅 Service: {{ $json.data.service_name }}\\n📅 Date: {{ new Date($json.data.appointment_date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) }}\\n🕒 Time: {{ $('Collect User Details Node').item.json.session.preferredTime }}\\n💳 Payment: {{ $('Collect User Details Node').item.json.session.paymentMethod || 'Cash' }} ({{ $('Collect User Details Node').item.json.session.paymentStatus || 'Pending' }})\\n📍 Address: 45 Blossom Avenue, Suite 200\\n\\nPlease arrive 5 minutes early. We look forward to seeing you! 🌸\\n\\nNeed to reschedule? Simply reply *RESCHEDULE*.",
         "additionalFields": {
           "previewUrl": false
         }
@@ -888,7 +888,7 @@
     },
     {
       "parameters": {
-        "url": "=https://your-express-backend.onrender.com/api/appointments/{{ $json.appointmentId }}/cancel",
+        "url": "={{$env.BACKEND_API_URL || 'http://localhost:3001'}}/api/appointments/{{ $json.appointmentId }}/cancel",
         "method": "PUT",
         "sendHeaders": true,
         "headers": {
@@ -922,7 +922,7 @@
         "operation": "send",
         "phoneNumberId": "1093698253829228",
         "recipientPhoneNumber": "={{ $json.phone }}",
-        "textBody": "🌸 Done! Your upcoming appointment has been successfully cancelled. Whenever you're ready to book with us again, just type 'book' and I'll assist you! — Westhill Nails & Spa",
+        "textBody": "🌸 Done! Your upcoming appointment has been successfully cancelled. Whenever you're ready to book with us again, just type *book* and I'll be happy to assist you! — Lumière Med Spa",
         "additionalFields": {
           "previewUrl": false
         }
@@ -948,7 +948,7 @@
         "operation": "send",
         "phoneNumberId": "1093698253829228",
         "recipientPhoneNumber": "={{ $json.phone }}",
-        "textBody": "=📅 I found an active upcoming appointment for you!\\n\\n💅 Service: {{ $json.serviceName }}\\n📅 Date: {{ $json.appointmentDate }}\\n🕒 Time: {{ $json.appointmentTime }}\\n\\nIf you need to reschedule or cancel, just let me know! 😊 — Westhill Nails & Spa",
+        "textBody": "=📅 Here's your upcoming appointment at *Lumière Med Spa*!\\n\\n💅 Service: {{ $json.serviceName }}\\n📅 Date: {{ new Date($json.appointmentDate).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) }}\\n🕒 Time: {{ $json.appointmentTime }}\\n📍 45 Blossom Avenue, Suite 200\\n\\nNeed to reschedule or cancel? Just let me know! 😊 — Lumière Med Spa",
         "additionalFields": {
           "previewUrl": false
         }
@@ -974,7 +974,7 @@
         "operation": "send",
         "phoneNumberId": "1093698253829228",
         "recipientPhoneNumber": "={{ $json.phone }}",
-        "textBody": "🌸 I couldn't locate any active upcoming appointments under your phone number. If you need to make a new booking, just let me know! — Westhill Nails & Spa",
+        "textBody": "🌸 I couldn't locate any active upcoming appointments under your phone number. If you'd like to make a new booking, just type *book* and I'll guide you through it! — Lumière Med Spa",
         "additionalFields": {
           "previewUrl": false
         }

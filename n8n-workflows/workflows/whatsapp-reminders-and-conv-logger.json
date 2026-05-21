@@ -71,7 +71,7 @@
         "operation": "send",
         "phoneNumberId": "1093698253829228",
         "recipientPhoneNumber": "={{ $json.phone_number }}",
-        "textBody": "=👋 Hi {{ $json.client_name }}!\\n\\n💅 This is a friendly reminder from *Westhill Nails & Spa* about your upcoming appointment:\\n\\n📋 *Service:* {{ $json.service_name }}\\n📅 *Date:* {{ new Date($json.appointment_date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' }) }}\\n🕒 *Time:* {{ $json.appointment_time }}\\n👩‍🔧 *Technician:* {{ $json.provider || 'Our expert team' }}\\n\\n✅ Please arrive 5 minutes early.\\n\\nSee you tomorrow! 🌸\\n\\nNeed to reschedule? Simply reply with *RESCHEDULE* and we'll help you find a new time.",
+        "textBody": "=👋 Hi {{ $json.client_name }}!\\n\\n💅 This is a friendly reminder from *Lumière Med Spa* about your upcoming appointment:\\n\\n📋 *Service:* {{ $json.service_name }}\\n📅 *Date:* {{ new Date($json.appointment_date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' }) }}\\n🕒 *Time:* {{ $json.appointment_time }}\\n👩‍🔬 *Technician:* {{ $json.provider || 'Our expert team' }}\\n📍 *Location:* 45 Blossom Avenue, Suite 200\\n\\n✅ Please arrive 5 minutes early.\\n\\nSee you tomorrow! 🌸\\n\\nNeed to reschedule? Simply reply with *RESCHEDULE* and we'll help you find a new time.",
         "additionalFields": { "previewUrl": false }
       },
       "credentials": {
@@ -156,7 +156,7 @@
         "operation": "send",
         "phoneNumberId": "1093698253829228",
         "recipientPhoneNumber": "={{ $json.phone_number }}",
-        "textBody": "=⏰ Hey {{ $json.client_name }}!\\n\\nYour appointment at *Westhill Nails & Spa* is in just *2 hours*!\\n\\n💅 *Service:* {{ $json.service_name }}\\n🕒 *Time:* {{ $json.appointment_time }}\\n📍 *Location:* Westhill Nails & Spa\\n\\nWe're looking forward to seeing you soon! 🌸\\n\\nRunning late or need to cancel? Please reply ASAP so we can accommodate other clients.",
+        "textBody": "=⏰ Hey {{ $json.client_name }}!\\n\\nYour appointment at *Lumière Med Spa* is in just *2 hours*!\\n\\n💅 *Service:* {{ $json.service_name }}\\n🕒 *Time:* {{ $json.appointment_time }}\\n📍 *Location:* 45 Blossom Avenue, Suite 200\\n\\nWe're looking forward to seeing you soon! 🌸\\n\\nRunning late or need to cancel? Please reply ASAP so we can accommodate other clients.",
         "additionalFields": { "previewUrl": false }
       },
       "credentials": {

@@ -202,4 +202,24 @@ router.put(
   appointmentController.cancelAppointment
 );
 
+// POST /api/appointments/:id/log - Log a reminder or audit event for an appointment
+// Used by n8n reminder cron nodes to record WhatsApp reminder dispatch.
+router.post(
+  '/:id/log',
+  [
+    param('id').isUUID().withMessage('Invalid appointment ID format'),
+    body('action').optional().trim(),
+    body('changedBy')
+      .optional()
+      .isIn(['system', 'whatsapp_ai', 'admin_crm'])
+      .withMessage('Invalid changedBy value'),
+    body('changed_by')
+      .optional()
+      .isIn(['system', 'whatsapp_ai', 'admin_crm'])
+      .withMessage('Invalid changed_by value'),
+    body('note').optional().trim()
+  ],
+  appointmentController.logReminderSent
+);
+
 module.exports = router;

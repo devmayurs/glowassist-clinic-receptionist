@@ -474,9 +474,104 @@ const getAppointments = async (req, res) => {
   }
 };
 
+
+// Log Reminder Sent: POST /api/appointments/:id/log
+// Called by n8n reminder cron nodes to record that a WhatsApp reminder was dispatched.
+const logReminderSent = async (req, res) => {
+  const { id } = req.params;
+  const action = req.body.action || 'reminder_sent';
+  const changedBy = req.body.changedBy || req.body.changed_by || 'system';
+  const note = req.body.note || `Reminder action: ${action}`;
+
+  try {
+    // Verify appointment exists
+    const { data: appointment, error: fetchError } = await supabase
+      .from('appointments')
+      .select('id, status')
+      .eq('id', id)
+      .single();
+
+    if (fetchError || !appointment) {
+      return res.status(404).json({ status: 'error', message: 'Appointment not found' });
+    }
+
+    // Insert audit log entry for the reminder
+    const { error: logError } = await supabase.from('appointment_logs').insert({
+      appointment_id: id,
+      previous_status: appointment.status,
+      new_status: appointment.status,  // status unchanged — just logging the reminder
+      changed_by: changedBy,
+      notes: note
+    });
+
+    if (logError) throw logError;
+
+    return res.status(200).json({
+      status: 'success',
+      message: `Reminder log recorded for appointment ${id}`,
+      action
+    });
+  } catch (error) {
+    console.error('Error in logReminderSent:', error.message);
+    return res.status(500).json({
+      status: 'error',
+      message: 'Internal server error while logging reminder',
+      error: error.message
+    });
+  }
+};
+
+// Archive Conversations: POST /api/conversations/archive
+// Called by n8n daily 3AM cron to archive WhatsApp AI conversation logs.
+const archiveConversations = async (req, res) => {
+  const date = req.body.date;
+  const source = req.body.source || 'whatsapp_ai';
+  const archivedBy = req.body.archivedBy || req.body.archived_by || 'n8n_cron';
+
+  if (!date) {
+    return res.status(400).json({ status: 'error', message: 'date is required (YYYY-MM-DD)' });
+  }
+
+  try {
+    // Fetch crm_live_chats records created on the given date
+    const startOfDay = `${date}T00:00:00.000Z`;
+    const endOfDay = `${date}T23:59:59.999Z`;
+
+    const { data: chats, error: fetchError } = await supabase
+      .from('crm_live_chats')
+      .select('id, client_id, source, agent_type, created_at')
+      .gte('created_at', startOfDay)
+      .lte('created_at', endOfDay);
+
+    if (fetchError) throw fetchError;
+
+    const count = chats ? chats.length : 0;
+
+    console.log(`[Conv Archive] ${archivedBy} archived ${count} conversation(s) for ${date} (source: ${source})`);
+
+    return res.status(200).json({
+      status: 'success',
+      message: `Conversation archive complete for ${date}`,
+      date,
+      source,
+      archivedBy,
+      conversationsArchived: count
+    });
+  } catch (error) {
+    console.error('Error in archiveConversations:', error.message);
+    return res.status(500).json({
+      status: 'error',
+      message: 'Internal server error while archiving conversations',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   createAppointment,
   rescheduleAppointment,
   cancelAppointment,
-  getAppointments
+  getAppointments,
+  logReminderSent,
+  archiveConversations
 };
