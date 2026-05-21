@@ -308,36 +308,37 @@
         }
       }
     },
-    {
+{
       "parameters": {
-        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={{$env.GEMINI_API_KEY}}",
-        "method": "POST",
-        "sendHeaders": true,
-        "headers": {
-          "parameters": [
+        "prompt": {
+          "values": [
             {
-              "name": "Content-Type",
-              "value": "application/json"
+              "type": "HumanMessagePromptTemplate",
+              "message": {
+                "values": [
+                  {
+                    "type": "text",
+                    "value": "Classify the following incoming text message from a salon customer into exactly one of these categories: [general_inquiry, book_appointment, reschedule_appointment, check_appointment, cancel_appointment].\n\nDefinitions:\n- general_inquiry: User asks about services, pricing, hours, location, policies, or standard conversation.\n- book_appointment: User wants to schedule a new appointment or book a treatment.\n- reschedule_appointment: User wants to change the date, time, or staff of an existing appointment.\n- check_appointment: User wants to know details of their upcoming appointment.\n- cancel_appointment: User explicitly asks to cancel, delete, or remove their booking.\n\nReturn ONLY a raw JSON string like this: { \"intent\": \"book_appointment\" } — no markdown fences, no explanation, just the JSON.\n\nCustomer Message: {{ $json.messages[0].text.body }}"
+                  }
+                ]
+              }
             }
           ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"contents\": [\n    {\n      \"role\": \"user\",\n      \"parts\": [\n        {\n          \"text\": \"Classify the following incoming text message from a salon customer into exactly one of these categories: [general_inquiry, book_appointment, reschedule_appointment, check_appointment, cancel_appointment].\\n\\nDefinitions:\\n- general_inquiry: User asks about services, pricing, hours, location, policies, or standard conversation.\\n- book_appointment: User wants to schedule a new appointment or book a treatment.\\n- reschedule_appointment: User wants to change the date, time, or staff of an existing appointment.\\n- check_appointment: User wants to know details of their upcoming appointment.\\n- cancel_appointment: User explicitly asks to cancel, delete, or remove their booking.\\n\\nReturn ONLY a raw JSON string like this: { \\\"intent\\\": \\\"book_appointment\\\" } without markdown fences.\\n\\nCustomer Message: {{ $json.messages[0].text.body }}\"\n        }\n      ]\n    }\n  ],\n  \"generationConfig\": {\n    \"temperature\": 0.1,\n    \"responseMimeType\": \"application/json\"\n  }\n}"
+        }
       },
       "id": "node-intent-detection",
       "name": "Intent Detection Node",
-      "type": "n8n-nodes-base.httpRequest",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
       "position": [
         -450,
         50
       ],
-      "typeVersion": 4.1,
-      "notes": "Determines intent using Gemini 2.5 Flash under a structured JSON response schema."
+      "typeVersion": 1.5,
+      "notes": "Classifies customer intent using Llama 3.3 70B via LangChain Basic LLM Chain."
     },
     {
       "parameters": {
-        "jsCode": "const responseText = $input.first().json.candidates[0].content.parts[0].text;\ntry {\n  const parsed = JSON.parse(responseText);\n  return [{ json: { intent: parsed.intent || 'general_inquiry' } }];\n} catch (e) {\n  return [{ json: { intent: 'general_inquiry' } }];\n}"
+        "jsCode": "const responseText = $input.first().json.text || '';\ntry {\n  // Strip markdown fences if model adds them despite instructions\n  const cleaned = responseText.replace(/```json?/gi, '').replace(/```/g, '').trim();\n  const parsed = JSON.parse(cleaned);\n  return [{ json: { intent: parsed.intent || 'general_inquiry' } }];\n} catch (e) {\n  // Fallback: scan text for any known intent keyword\n  const text = responseText.toLowerCase();\n  if (text.includes('book_appointment')) return [{ json: { intent: 'book_appointment' } }];\n  if (text.includes('cancel_appointment')) return [{ json: { intent: 'cancel_appointment' } }];\n  if (text.includes('reschedule_appointment')) return [{ json: { intent: 'reschedule_appointment' } }];\n  if (text.includes('check_appointment')) return [{ json: { intent: 'check_appointment' } }];\n  return [{ json: { intent: 'general_inquiry' } }];\n}"
       },
       "id": "node-parse-intent",
       "name": "Parse Intent Response",
@@ -348,6 +349,35 @@
       ],
       "typeVersion": 2
     },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "llama-3.3-70b-versatile",
+          "mode": "list",
+          "cachedResultName": "llama-3.3-70b-versatile"
+        },
+        "builtInTools": {},
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -450,
+        200
+      ],
+      "id": "node-intent-llm-model",
+      "name": "Intent LLM Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "X67LyGhcGJFdkN37",
+          "name": "OpenAI account"
+        }
+      }
+    },
+
     {
       "parameters": {
         "rules": {
@@ -452,34 +482,64 @@
     },
     {
       "parameters": {
-        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={{$env.GEMINI_API_KEY}}",
-        "method": "POST",
-        "sendHeaders": true,
-        "headers": {
-          "parameters": [
+        "prompt": {
+          "values": [
             {
-              "name": "Content-Type",
-              "value": "application/json"
+              "type": "HumanMessagePromptTemplate",
+              "message": {
+                "values": [
+                  {
+                    "type": "text",
+                    "value": "Analyze the user request and extract any of these appointment booking details. If not mentioned, output null for that field:\n1. fullName (Client full name)\n2. serviceName (Name of service like Gel Manicure Deluxe, Luxury Pedicure, Full Gel Nail Extensions, Botox Aesthetic Session, Lip Dermal Filler Session)\n3. preferredDate (Target booking date formatted as YYYY-MM-DD)\n4. preferredTime (Target booking time formatted as HH:MM)\n5. paymentMethod (cash, card, online)\n6. paymentStatus (pending or paid, defaults to pending)\n7. notes (technician request or custom request)\n\nReturn ONLY a raw JSON string like this: { \"fullName\": null, \"serviceName\": \"Gel Manicure Deluxe\", \"preferredDate\": \"2026-06-01\", \"preferredTime\": \"14:00\", \"paymentMethod\": null, \"paymentStatus\": \"pending\", \"notes\": null } — no markdown fences, no explanation.\n\nCustomer Message: {{ $('WhatsApp Trigger1').item.json.messages[0].text.body }}"
+                  }
+                ]
+              }
             }
           ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"contents\": [\n    {\n      \"role\": \"user\",\n      \"parts\": [\n        {\n          \"text\": \"Analyze the user request and extract any of these 8 appointment booking details. If not mentioned in the message, output null for that field:\\n1. fullName (Client full name)\\n2. serviceName (Name of service like Gel Manicure, Pedicure, Gel extensions, Botox, Lip filler etc)\\n3. preferredDate (Target booking date formatted as YYYY-MM-DD)\\n4. preferredTime (Target booking time formatted as HH:MM:SS or HH:MM)\\n5. paymentMethod (cash, card, online)\\n6. paymentStatus (pending or paid, defaults to pending)\\n7. notes (technician request or custom request)\\n\\nReturn ONLY a raw JSON string like this: { \\\"fullName\\\": null, \\\"serviceName\\\": \\\"Gel Manicure\\\", \\\"preferredDate\\\": \\\"2026-06-01\\\", \\\"preferredTime\\\": \\\"14:00\\\", \\\"paymentMethod\\\": null, \\\"paymentStatus\\\": \\\"pending\\\", \\\"notes\\\": null } without markdown blocks.\\n\\nCustomer Message: {{ $('WhatsApp Trigger1').item.json.messages[0].text.body }}\"\n        }\n      ]\n    }\n  ],\n  \"generationConfig\": {\n    \"temperature\": 0.1,\n    \"responseMimeType\": \"application/json\"\n  }\n}"
+        }
       },
       "id": "node-extract-details",
       "name": "Extract Booking Details",
-      "type": "n8n-nodes-base.httpRequest",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
       "position": [
         150,
         150
       ],
-      "typeVersion": 4.1,
-      "notes": "Extracts the 8 variables from the customer's raw WhatsApp text."
+      "typeVersion": 1.5,
+      "notes": "Extracts booking variables from the customer's WhatsApp text using Llama 3.3 70B."
     },
     {
       "parameters": {
-        "jsCode": "const phone = $node['WhatsApp Trigger1'].json.messages[0].from;\nconst rawExtract = JSON.parse($input.first().json.candidates[0].content.parts[0].text);\n\n// We access n8n static data representing our long-term session cache for each phone number\nconst staticData = getWorkflowStaticData('global');\nif (!staticData.sessions) staticData.sessions = {};\nif (!staticData.sessions[phone]) {\n  staticData.sessions[phone] = {\n    fullName: null,\n    phoneNumber: phone,\n    serviceName: null,\n    preferredDate: null,\n    preferredTime: null,\n    paymentMethod: 'cash',\n    paymentStatus: 'pending',\n    notes: null\n  };\n}\n\nconst session = staticData.sessions[phone];\n\n// Merge newly extracted variables only if they are not null\nif (rawExtract.fullName) session.fullName = rawExtract.fullName;\nif (rawExtract.serviceName) session.serviceName = rawExtract.serviceName;\nif (rawExtract.preferredDate) session.preferredDate = rawExtract.preferredDate;\nif (rawExtract.preferredTime) session.preferredTime = rawExtract.preferredTime;\nif (rawExtract.paymentMethod) session.paymentMethod = rawExtract.paymentMethod;\nif (rawExtract.paymentStatus) session.paymentStatus = rawExtract.paymentStatus;\nif (rawExtract.notes) session.notes = rawExtract.notes;\n\nreturn [{ json: { session, phone } }];"
+        "model": {
+          "__rl": true,
+          "value": "llama-3.3-70b-versatile",
+          "mode": "list",
+          "cachedResultName": "llama-3.3-70b-versatile"
+        },
+        "builtInTools": {},
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        150,
+        300
+      ],
+      "id": "node-extract-llm-model",
+      "name": "Extract LLM Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "X67LyGhcGJFdkN37",
+          "name": "OpenAI account"
+        }
+      }
+    },
+
+    {
+      "parameters": {
+        "jsCode": "const phone = $node['WhatsApp Trigger1'].json.messages[0].from;\nconst responseText = $input.first().json.text || '{}';\n// Strip markdown fences if model adds them\nconst cleaned = responseText.replace(/```json?/gi, '').replace(/```/g, '').trim();\nlet rawExtract = {};\ntry { rawExtract = JSON.parse(cleaned); } catch (e) { rawExtract = {}; }\n\n// We access n8n static data representing our long-term session cache for each phone number\nconst staticData = getWorkflowStaticData('global');\nif (!staticData.sessions) staticData.sessions = {};\nif (!staticData.sessions[phone]) {\n  staticData.sessions[phone] = {\n    fullName: null,\n    phoneNumber: phone,\n    serviceName: null,\n    preferredDate: null,\n    preferredTime: null,\n    paymentMethod: 'cash',\n    paymentStatus: 'pending',\n    notes: null\n  };\n}\n\nconst session = staticData.sessions[phone];\n\n// Merge newly extracted variables only if they are not null\nif (rawExtract.fullName) session.fullName = rawExtract.fullName;\nif (rawExtract.serviceName) session.serviceName = rawExtract.serviceName;\nif (rawExtract.preferredDate) session.preferredDate = rawExtract.preferredDate;\nif (rawExtract.preferredTime) session.preferredTime = rawExtract.preferredTime;\nif (rawExtract.paymentMethod) session.paymentMethod = rawExtract.paymentMethod;\nif (rawExtract.paymentStatus) session.paymentStatus = rawExtract.paymentStatus;\nif (rawExtract.notes) session.notes = rawExtract.notes;\n\nreturn [{ json: { session, phone } }];"
       },
       "id": "node-merge-state",
       "name": "Merge State Node",
@@ -1122,6 +1182,15 @@
             "index": 0
           }
         ]
+      ],
+      "ai_languageModel": [
+        [
+          {
+            "node": "Intent LLM Model",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
       ]
     },
     "Parse Intent Response": {
@@ -1180,6 +1249,15 @@
           {
             "node": "Merge State Node",
             "type": "main",
+            "index": 0
+          }
+        ]
+      ],
+      "ai_languageModel": [
+        [
+          {
+            "node": "Extract LLM Model",
+            "type": "ai_languageModel",
             "index": 0
           }
         ]
