@@ -10,11 +10,15 @@ export const axiosInstance = axios.create({
   },
 });
 
-// Auto-seed development token for seamless local developer testing if none is set
+// Seed token into localStorage on first load
+// In production: uses VITE_ADMIN_TOKEN (real JWT set in Vercel env vars)
+// In local dev: uses development-token-glowassist (accepted by backend when NODE_ENV !== production)
 if (typeof window !== 'undefined') {
   const currentToken = localStorage.getItem('jwt_token') || localStorage.getItem('token');
   if (!currentToken) {
-    localStorage.setItem('jwt_token', 'development-token-glowassist');
+    const prodToken = import.meta.env.VITE_ADMIN_TOKEN;
+    const devToken  = 'development-token-glowassist';
+    localStorage.setItem('jwt_token', prodToken || devToken);
   }
 }
 
@@ -23,9 +27,9 @@ axiosInstance.interceptors.request.use(
   (config) => {
     let token = localStorage.getItem('jwt_token') || localStorage.getItem('token');
     
-    // Absolute fallback: if no token is found, or if it is empty/invalid, use the development token
+    // Fallback hierarchy: stored token → production env token → dev token
     if (!token || token === 'undefined' || token === 'null' || token.trim() === '') {
-      token = 'development-token-glowassist';
+      token = import.meta.env.VITE_ADMIN_TOKEN || 'development-token-glowassist';
     }
     
     config.headers.Authorization = `Bearer ${token}`;
