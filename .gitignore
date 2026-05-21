@@ -60,3 +60,23 @@ coverage/
 .serverless/
 .env.vault
 tsconfig.tsbuildinfo
+
+# AI Assistant & Prompt Workspace Files (Local Only)
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+STRUCTURE.md
+agents/
+commands/
+rules/
+skills/
+mcp.json
+plan.md
+backend/plan.md
+frontend/plan.md
+database/plan.md
+n8n/plan.md
+task.md
+guide.md
+AI-Receptionist-Agent.md
+
