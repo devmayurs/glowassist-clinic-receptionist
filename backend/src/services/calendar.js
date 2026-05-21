@@ -51,9 +51,13 @@ async function createEvent(appointmentData) {
     const normalizedTime = normalizeTime(appointmentTime);
     const durationMinutes = await getServiceDuration(serviceName);
 
-    // Calculate start and end times in local execution timezone, then represent in ISO format
-    const startLocal = new Date(`${appointmentDate}T${normalizedTime}`);
-    const endLocal = new Date(startLocal.getTime() + durationMinutes * 60 * 1000);
+    // Build start/end as local datetime strings (no UTC conversion — interpreted as IST by Google)
+    const [sh, sm] = normalizedTime.split(':').map(Number);
+    const totalEndMinutes = sh * 60 + sm + durationMinutes;
+    const endH = String(Math.floor(totalEndMinutes / 60) % 24).padStart(2, '0');
+    const endM = String(totalEndMinutes % 60).padStart(2, '0');
+    const startDateTime = `${appointmentDate}T${normalizedTime}`;
+    const endDateTime   = `${appointmentDate}T${endH}:${endM}:00`;
 
     const descriptionText = [
       `Client: ${clientName}`,
@@ -70,12 +74,12 @@ async function createEvent(appointmentData) {
         summary: `Westhill Nails Appointment - ${clientName}`,
         description: descriptionText,
         start: {
-          dateTime: startLocal.toISOString(),
-          timeZone: 'UTC'
+          dateTime: startDateTime,
+          timeZone: 'Asia/Kolkata'
         },
         end: {
-          dateTime: endLocal.toISOString(),
-          timeZone: 'UTC'
+          dateTime: endDateTime,
+          timeZone: 'Asia/Kolkata'
         },
         status: 'confirmed'
       }
@@ -123,20 +127,25 @@ async function updateEvent(eventId, newDate, newTime) {
     }
 
     const normalizedTime = normalizeTime(newTime);
-    const newStartLocal = new Date(`${newDate}T${normalizedTime}`);
-    const newEndLocal = new Date(newStartLocal.getTime() + durationMs);
+    const [rsh, rsm] = normalizedTime.split(':').map(Number);
+    const durationMins = Math.round(durationMs / 60000);
+    const totalREndMinutes = rsh * 60 + rsm + durationMins;
+    const rEndH = String(Math.floor(totalREndMinutes / 60) % 24).padStart(2, '0');
+    const rEndM = String(totalREndMinutes % 60).padStart(2, '0');
+    const newStartDateTime = `${newDate}T${normalizedTime}`;
+    const newEndDateTime   = `${newDate}T${rEndH}:${rEndM}:00`;
 
     const response = await calendar.events.patch({
       calendarId: 'primary',
       eventId: eventId,
       requestBody: {
         start: {
-          dateTime: newStartLocal.toISOString(),
-          timeZone: 'UTC'
+          dateTime: newStartDateTime,
+          timeZone: 'Asia/Kolkata'
         },
         end: {
-          dateTime: newEndLocal.toISOString(),
-          timeZone: 'UTC'
+          dateTime: newEndDateTime,
+          timeZone: 'Asia/Kolkata'
         }
       }
     });

@@ -10,6 +10,11 @@ const dashboardRoutes = require('./routes/dashboard.routes');
 
 const app = express();
 
+// 0. Trust Proxy — required for Render, Vercel, Nginx, Cloudflare and any reverse proxy.
+//    Without this, express-rate-limit throws ERR_ERL_UNEXPECTED_X_FORWARDED_FOR.
+//    '1' means trust exactly one hop (the Render/Nginx load balancer in front of us).
+app.set('trust proxy', 1);
+
 // 1. Security Middleware
 app.use(helmet());
 
