@@ -18,7 +18,9 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173',
   'http://localhost:5174',
-  process.env.FRONTEND_URL
+  process.env.FRONTEND_URL,
+  process.env.N8N_URL,              // n8n server calling backend (set in .env)
+  'https://n8n.zenithflow.in'       // hardcoded fallback for n8n production domain
 ].filter(Boolean);
 
 app.use(
