@@ -1182,11 +1182,13 @@
             "index": 0
           }
         ]
-      ],
+      ]
+    },
+    "Intent LLM Model": {
       "ai_languageModel": [
         [
           {
-            "node": "Intent LLM Model",
+            "node": "Intent Detection Node",
             "type": "ai_languageModel",
             "index": 0
           }
@@ -1252,11 +1254,13 @@
             "index": 0
           }
         ]
-      ],
+      ]
+    },
+    "Extract LLM Model": {
       "ai_languageModel": [
         [
           {
-            "node": "Extract LLM Model",
+            "node": "Extract Booking Details",
             "type": "ai_languageModel",
             "index": 0
           }
