@@ -310,21 +310,8 @@
     },
 {
       "parameters": {
-        "prompt": {
-          "values": [
-            {
-              "type": "HumanMessagePromptTemplate",
-              "message": {
-                "values": [
-                  {
-                    "type": "text",
-                    "value": "Classify the following incoming text message from a salon customer into exactly one of these categories: [general_inquiry, book_appointment, reschedule_appointment, check_appointment, cancel_appointment].\n\nDefinitions:\n- general_inquiry: User asks about services, pricing, hours, location, policies, or standard conversation.\n- book_appointment: User wants to schedule a new appointment or book a treatment.\n- reschedule_appointment: User wants to change the date, time, or staff of an existing appointment.\n- check_appointment: User wants to know details of their upcoming appointment.\n- cancel_appointment: User explicitly asks to cancel, delete, or remove their booking.\n\nReturn ONLY a raw JSON string like this: { \"intent\": \"book_appointment\" } — no markdown fences, no explanation, just the JSON.\n\nCustomer Message: {{ $json.messages[0].text.body }}"
-                  }
-                ]
-              }
-            }
-          ]
-        }
+        "promptType": "define",
+        "text": "=Classify the following incoming text message from a salon customer into exactly one of these categories: [general_inquiry, book_appointment, reschedule_appointment, check_appointment, cancel_appointment].\n\nDefinitions:\n- general_inquiry: User asks about services, pricing, hours, location, policies, or standard conversation.\n- book_appointment: User wants to schedule a new appointment or book a treatment.\n- reschedule_appointment: User wants to change the date, time, or staff of an existing appointment.\n- check_appointment: User wants to know details of their upcoming appointment.\n- cancel_appointment: User explicitly asks to cancel, delete, or remove their booking.\n\nReturn ONLY a raw JSON string like this: { \"intent\": \"book_appointment\" } — no markdown fences, no explanation, just the JSON.\n\nCustomer Message: {{ $json.messages[0].text.body }}"
       },
       "id": "node-intent-detection",
       "name": "Intent Detection Node",
@@ -482,21 +469,8 @@
     },
     {
       "parameters": {
-        "prompt": {
-          "values": [
-            {
-              "type": "HumanMessagePromptTemplate",
-              "message": {
-                "values": [
-                  {
-                    "type": "text",
-                    "value": "Analyze the user request and extract any of these appointment booking details. If not mentioned, output null for that field:\n1. fullName (Client full name)\n2. serviceName (Name of service like Gel Manicure Deluxe, Luxury Pedicure, Full Gel Nail Extensions, Botox Aesthetic Session, Lip Dermal Filler Session)\n3. preferredDate (Target booking date formatted as YYYY-MM-DD)\n4. preferredTime (Target booking time formatted as HH:MM)\n5. paymentMethod (cash, card, online)\n6. paymentStatus (pending or paid, defaults to pending)\n7. notes (technician request or custom request)\n\nReturn ONLY a raw JSON string like this: { \"fullName\": null, \"serviceName\": \"Gel Manicure Deluxe\", \"preferredDate\": \"2026-06-01\", \"preferredTime\": \"14:00\", \"paymentMethod\": null, \"paymentStatus\": \"pending\", \"notes\": null } — no markdown fences, no explanation.\n\nCustomer Message: {{ $('WhatsApp Trigger1').item.json.messages[0].text.body }}"
-                  }
-                ]
-              }
-            }
-          ]
-        }
+        "promptType": "define",
+        "text": "=Analyze the user request and extract any of these appointment booking details. If not mentioned, output null for that field:\n1. fullName (Client full name)\n2. serviceName (Name of service like Gel Manicure Deluxe, Luxury Pedicure, Full Gel Nail Extensions, Botox Aesthetic Session, Lip Dermal Filler Session)\n3. preferredDate (Target booking date formatted as YYYY-MM-DD)\n4. preferredTime (Target booking time formatted as HH:MM)\n5. paymentMethod (cash, card, online)\n6. paymentStatus (pending or paid, defaults to pending)\n7. notes (technician request or custom request)\n\nReturn ONLY a raw JSON string like this: { \"fullName\": null, \"serviceName\": \"Gel Manicure Deluxe\", \"preferredDate\": \"2026-06-01\", \"preferredTime\": \"14:00\", \"paymentMethod\": null, \"paymentStatus\": \"pending\", \"notes\": null } — no markdown fences, no explanation.\n\nCustomer Message: {{ $('WhatsApp Trigger1').item.json.messages[0].text.body }}"
       },
       "id": "node-extract-details",
       "name": "Extract Booking Details",
