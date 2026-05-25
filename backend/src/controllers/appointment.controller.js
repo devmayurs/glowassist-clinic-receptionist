@@ -567,11 +567,83 @@ const archiveConversations = async (req, res) => {
   }
 };
 
+// Get Available Slots: GET /api/appointments/available-slots?date=YYYY-MM-DD&serviceName=xxx
+const getAvailableSlots = async (req, res) => {
+  const { date, serviceName } = req.query;
+
+  if (!date) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'Query parameter "date" is required (YYYY-MM-DD)'
+    });
+  }
+
+  try {
+    // Determine working hours for the requested day
+    const dateObj = new Date(`${date}T00:00:00`);
+    const day = dateObj.getDay(); // 0 = Sunday
+
+    let openMinutes, closeMinutes;
+    if (day === 0) {
+      // Sunday: 10:00 AM – 5:00 PM
+      openMinutes = 600;   // 10:00
+      closeMinutes = 1020; // 17:00
+    } else {
+      // Mon-Sat: 9:00 AM – 7:00 PM
+      openMinutes = 540;   // 09:00
+      closeMinutes = 1140; // 19:00
+    }
+
+    // Generate all 30-minute slots within working hours
+    const allSlots = [];
+    for (let m = openMinutes; m < closeMinutes; m += 30) {
+      const hh = String(Math.floor(m / 60)).padStart(2, '0');
+      const mm = String(m % 60).padStart(2, '0');
+      allSlots.push(`${hh}:${mm}`);
+    }
+
+    // Fetch existing appointments for this date
+    const { data: existingAppointments, error } = await supabase
+      .from('appointments')
+      .select('appointment_time')
+      .eq('appointment_date', date)
+      .in('status', ['scheduled', 'rescheduled']);
+
+    if (error) throw error;
+
+    // Build set of booked times (normalized to HH:MM)
+    const bookedTimes = new Set(
+      (existingAppointments || []).map(app => {
+        const parts = app.appointment_time.split(':');
+        return `${parts[0]}:${parts[1]}`;
+      })
+    );
+
+    // Filter out booked slots
+    const availableSlots = allSlots.filter(slot => !bookedTimes.has(slot));
+
+    return res.status(200).json({
+      status: 'success',
+      date,
+      serviceName: serviceName || null,
+      slots: availableSlots
+    });
+  } catch (error) {
+    console.error('Error in getAvailableSlots:', error.message);
+    return res.status(500).json({
+      status: 'error',
+      message: 'Internal server error while fetching available slots',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   createAppointment,
   rescheduleAppointment,
   cancelAppointment,
   getAppointments,
+  getAvailableSlots,
   logReminderSent,
   archiveConversations
 };

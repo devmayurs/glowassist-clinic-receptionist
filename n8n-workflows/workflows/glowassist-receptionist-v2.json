@@ -5,61 +5,35 @@
       "parameters": {},
       "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
       "typeVersion": 1,
-      "position": [
-        300,
-        500
-      ],
+      "position": [300, 500],
       "id": "ff55c4dd-4d7d-4407-a71c-662c5e924c85",
       "name": "Embeddings Google Gemini",
       "credentials": {
-        "googlePalmApi": {
-          "id": "BRCTfZHZPUB5a9TI",
-          "name": "Google Gemini(PaLM) Api account"
-        }
+        "googlePalmApi": { "id": "BRCTfZHZPUB5a9TI", "name": "Google Gemini(PaLM) Api account" }
       },
       "disabled": true
     },
     {
-      "parameters": {
-        "modelName": "models/gemini-2.5-flash",
-        "options": {}
-      },
+      "parameters": { "modelName": "models/gemini-2.5-flash", "options": {} },
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1.1,
-      "position": [
-        550,
-        400
-      ],
+      "position": [550, 400],
       "id": "4ebd9234-baaf-4a70-a62a-419e9743e111",
       "name": "Google Gemini Chat Model",
       "credentials": {
-        "googlePalmApi": {
-          "id": "BRCTfZHZPUB5a9TI",
-          "name": "Google Gemini(PaLM) Api account"
-        }
+        "googlePalmApi": { "id": "BRCTfZHZPUB5a9TI", "name": "Google Gemini(PaLM) Api account" }
       }
     },
     {
-      "parameters": {
-        "updates": [
-          "messages"
-        ],
-        "options": {}
-      },
+      "parameters": { "updates": ["messages"], "options": {} },
       "id": "8739bbcb-98eb-46d0-9fd4-94dc6b66412f",
       "name": "WhatsApp Trigger1",
       "type": "n8n-nodes-base.whatsAppTrigger",
-      "position": [
-        -900,
-        150
-      ],
+      "position": [-900, 150],
       "webhookId": "YOUR_WEBHOOK_ID",
       "typeVersion": 1,
       "credentials": {
-        "whatsAppTriggerApi": {
-          "id": "ARtFfQkVsjwMeNQc",
-          "name": "WhatsApp OAuth Milind"
-        }
+        "whatsAppTriggerApi": { "id": "ARtFfQkVsjwMeNQc", "name": "WhatsApp OAuth Milind" }
       }
     },
     {
@@ -68,22 +42,11 @@
           "values": [
             {
               "conditions": {
-                "options": {
-                  "caseSensitive": true,
-                  "leftValue": "",
-                  "typeValidation": "strict",
-                  "version": 2
-                },
-                "combinator": "and",
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
+                "combinator": "or",
                 "conditions": [
-                  {
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    },
-                    "leftValue": "={{ $json.messages[0].type }}",
-                    "rightValue": "text"
-                  }
+                  { "operator": { "type": "string", "operation": "equals" }, "leftValue": "={{ $json.messages[0].type }}", "rightValue": "text" },
+                  { "operator": { "type": "string", "operation": "equals" }, "leftValue": "={{ $json.messages[0].type }}", "rightValue": "interactive" }
                 ]
               },
               "renameOutput": true,
@@ -91,23 +54,11 @@
             },
             {
               "conditions": {
-                "options": {
-                  "caseSensitive": true,
-                  "leftValue": "",
-                  "typeValidation": "strict",
-                  "version": 2
-                },
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
                 "combinator": "and",
                 "conditions": [
-                  {
-                    "id": "89971d8c-a386-4e77-8f6c-f491a8e84cb6",
-                    "operator": {
-                      "type": "string",
-                      "operation": "notEquals"
-                    },
-                    "leftValue": "={{ $json.messages[0].type }}",
-                    "rightValue": "text"
-                  }
+                  { "id": "89971d8c-a386-4e77-8f6c-f491a8e84cb6", "operator": { "type": "string", "operation": "notEquals" }, "leftValue": "={{ $json.messages[0].type }}", "rightValue": "text" },
+                  { "operator": { "type": "string", "operation": "notEquals" }, "leftValue": "={{ $json.messages[0].type }}", "rightValue": "interactive" }
                 ]
               },
               "renameOutput": true,
@@ -120,16 +71,24 @@
       "id": "48950f88-ef02-40ac-97b3-4fe023b5356c",
       "name": "Handle Message Types",
       "type": "n8n-nodes-base.switch",
-      "position": [
-        -700,
-        150
-      ],
+      "position": [-700, 150],
       "typeVersion": 3.2
     },
     {
       "parameters": {
+        "jsCode": "const msg = $input.first().json.messages[0];\nconst msgType = msg.type;\nlet textBody = '';\nlet interactiveId = null;\nlet interactiveTitle = null;\nlet isInteractive = false;\n\nif (msgType === 'interactive') {\n  isInteractive = true;\n  if (msg.interactive && msg.interactive.list_reply) {\n    interactiveId = msg.interactive.list_reply.id;\n    interactiveTitle = msg.interactive.list_reply.title;\n    textBody = msg.interactive.list_reply.title;\n  } else if (msg.interactive && msg.interactive.button_reply) {\n    interactiveId = msg.interactive.button_reply.id;\n    interactiveTitle = msg.interactive.button_reply.title;\n    textBody = msg.interactive.button_reply.title;\n  } else {\n    textBody = 'Unknown interactive response';\n  }\n} else if (msgType === 'text') {\n  textBody = msg.text.body;\n} else {\n  textBody = '';\n}\n\nreturn [{\n  json: {\n    ...($input.first().json),\n    _parsed: {\n      textBody,\n      interactiveId,\n      interactiveTitle,\n      isInteractive,\n      msgType,\n      from: msg.from\n    }\n  }\n}];"
+      },
+      "id": "node-parse-interactive",
+      "name": "Parse Interactive Response",
+      "type": "n8n-nodes-base.code",
+      "position": [-520, 50],
+      "typeVersion": 2,
+      "notes": "Normalizes both text and interactive (list_reply / button_reply) messages into a unified textBody."
+    },
+    {
+      "parameters": {
         "promptType": "define",
-        "text": "={{ $('WhatsApp Trigger1').item.json.messages[0].text.body }}",
+        "text": "={{ $('Parse Interactive Response').item.json._parsed.textBody }}",
         "options": {
           "systemMessage": "You are a friendly and professional AI receptionist for Lumière Med Spa, a premier medical spa and aesthetic clinic. Your goal is to help clients learn about our services, pricing, working hours, location, and to guide them through booking appointments.\n\nKey Information About Lumière Med Spa:\nWe specialize in:\n- Gel Manicure Deluxe ($45, 45 min)\n- Luxury Pedicure ($60, 60 min)\n- Full Gel Nail Extensions ($85, 75 min)\n- Botox Aesthetic Session — Forehead ($350, 30 min)\n- Lip Dermal Filler Session ($480, 45 min)\n\nOur Expert Team:\n- Esthetician Maya — Manicure & nail specialist\n- Beautician Lisa — Nail art specialist\n- Dr. Reeves — Aesthetic physician (Botox & fillers)\n\nContact & Hours:\n- Address: 45 Blossom Avenue, Suite 200\n- Phone: (555) 784-2301\n- Monday to Saturday: 9:00 AM - 7:00 PM\n- Sunday: 10:00 AM - 5:00 PM\n\nBe warm, professional, and concise. If a client wants to book, guide them through the booking process by asking for their name, preferred service, date, and time. Always confirm appointment details before finalising."
         }
@@ -137,23 +96,15 @@
       "id": "34bce834-3a96-4f36-a1b3-1158c5663c66",
       "name": "AI Sales Agent",
       "type": "@n8n/n8n-nodes-langchain.agent",
-      "position": [
-        250,
-        -100
-      ],
+      "position": [250, -100],
       "typeVersion": 1.6
     },
     {
-      "parameters": {
-        "memoryKey": "whatsapp-lumiere-medspa"
-      },
+      "parameters": { "memoryKey": "whatsapp-lumiere-medspa" },
       "id": "e88a77ee-1d67-48a7-abd9-643f0f62ca7f",
       "name": "Services Catalogue",
       "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
-      "position": [
-        300,
-        300
-      ],
+      "position": [300, 300],
       "typeVersion": 1
     },
     {
@@ -162,24 +113,16 @@
         "phoneNumberId": "1093698253829228",
         "recipientPhoneNumber": "={{ $('WhatsApp Trigger1').item.json.messages[0].from }}",
         "textBody": "Thanks for reaching out to Lumière Med Spa! 🌸 I'm unable to process non-text messages at the moment. Please send your message as text so I can better assist you. You can also call us at (555) 784-2301 or visit us at 45 Blossom Avenue, Suite 200. Thank you!",
-        "additionalFields": {
-          "previewUrl": false
-        }
+        "additionalFields": { "previewUrl": false }
       },
       "id": "78f5acbf-898c-4fee-8bae-f78e2d31a535",
       "name": "Reply To User1",
       "type": "n8n-nodes-base.whatsApp",
-      "position": [
-        -450,
-        450
-      ],
+      "position": [-450, 450],
       "typeVersion": 1,
       "webhookId": "YOUR_WEBHOOK_ID_2",
       "credentials": {
-        "whatsAppApi": {
-          "id": "m3O3H7hZRxW8O5Xm",
-          "name": "WhatsApp account Milind"
-        }
+        "whatsAppApi": { "id": "m3O3H7hZRxW8O5Xm", "name": "WhatsApp account Milind" }
       }
     },
     {
@@ -188,24 +131,16 @@
         "phoneNumberId": "1093698253829228",
         "recipientPhoneNumber": "={{ $('WhatsApp Trigger1').item.json.messages[0].from }}",
         "textBody": "={{ $json.output }}",
-        "additionalFields": {
-          "previewUrl": false
-        }
+        "additionalFields": { "previewUrl": false }
       },
       "id": "13bc56c5-6db1-445a-acd0-816481644ce7",
       "name": "Reply To User",
       "type": "n8n-nodes-base.whatsApp",
-      "position": [
-        500,
-        -100
-      ],
+      "position": [500, -100],
       "typeVersion": 1,
       "webhookId": "YOUR_WEBHOOK_ID_3",
       "credentials": {
-        "whatsAppApi": {
-          "id": "m3O3H7hZRxW8O5Xm",
-          "name": "WhatsApp account Milind"
-        }
+        "whatsAppApi": { "id": "m3O3H7hZRxW8O5Xm", "name": "WhatsApp account Milind" }
       }
     },
     {
@@ -216,10 +151,7 @@
       "id": "2d214230-c116-4724-a42e-d3eb5b27d732",
       "name": "Services Info Tool",
       "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
-      "position": [
-        450,
-        150
-      ],
+      "position": [450, 150],
       "typeVersion": 1
     },
     {
@@ -230,230 +162,89 @@
       "id": "94e26372-a237-4098-8bfa-f92e2b3e51ce",
       "name": "Conversation Memory",
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
-      "position": [
-        300,
-        150
-      ],
+      "position": [300, 150],
       "typeVersion": 1.2
     },
     {
       "parameters": {
-        "model": {
-          "__rl": true,
-          "value": "llama-3.3-70b-versatile",
-          "mode": "list",
-          "cachedResultName": "llama-3.3-70b-versatile"
-        },
+        "model": { "__rl": true, "value": "llama-3.3-70b-versatile", "mode": "list", "cachedResultName": "llama-3.3-70b-versatile" },
         "builtInTools": {},
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
-      "position": [
-        100,
-        200
-      ],
+      "position": [100, 200],
       "id": "13aeb738-3842-46d3-a8f9-8a58011fd081",
       "name": "OpenAI Chat Model",
-      "credentials": {
-        "openAiApi": {
-          "id": "X67LyGhcGJFdkN37",
-          "name": "OpenAI account"
-        }
-      }
+      "credentials": { "openAiApi": { "id": "X67LyGhcGJFdkN37", "name": "OpenAI account" } }
     },
     {
-      "parameters": {
-        "model": "llama-3.3-70b-versatile",
-        "options": {}
-      },
+      "parameters": { "model": "llama-3.3-70b-versatile", "options": {} },
       "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
       "typeVersion": 1.2,
-      "position": [
-        450,
-        500
-      ],
+      "position": [450, 500],
       "id": "132f661e-9cb7-427a-9f03-ef55bfc047cc",
       "name": "Embeddings OpenAI",
-      "credentials": {
-        "openAiApi": {
-          "id": "X67LyGhcGJFdkN37",
-          "name": "OpenAI account"
-        }
-      }
+      "credentials": { "openAiApi": { "id": "X67LyGhcGJFdkN37", "name": "OpenAI account" } }
     },
     {
       "parameters": {
-        "model": {
-          "__rl": true,
-          "value": "llama-3.3-70b-versatile",
-          "mode": "list",
-          "cachedResultName": "llama-3.3-70b-versatile"
-        },
+        "model": { "__rl": true, "value": "llama-3.3-70b-versatile", "mode": "list", "cachedResultName": "llama-3.3-70b-versatile" },
         "builtInTools": {},
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
-      "position": [
-        600,
-        150
-      ],
+      "position": [600, 150],
       "id": "c3cfd289-a623-4d8e-a0a3-b76349c6984c",
       "name": "OpenAI Chat Model1",
-      "credentials": {
-        "openAiApi": {
-          "id": "X67LyGhcGJFdkN37",
-          "name": "OpenAI account"
-        }
-      }
+      "credentials": { "openAiApi": { "id": "X67LyGhcGJFdkN37", "name": "OpenAI account" } }
     },
-{
+    {
       "parameters": {
         "promptType": "define",
-        "text": "=Classify the following incoming text message from a salon customer into exactly one of these categories: [general_inquiry, book_appointment, reschedule_appointment, check_appointment, cancel_appointment].\n\nDefinitions:\n- general_inquiry: User asks about services, pricing, hours, location, policies, or standard conversation.\n- book_appointment: User wants to schedule a new appointment or book a treatment.\n- reschedule_appointment: User wants to change the date, time, or staff of an existing appointment.\n- check_appointment: User wants to know details of their upcoming appointment.\n- cancel_appointment: User explicitly asks to cancel, delete, or remove their booking.\n\nReturn ONLY a raw JSON string like this: { \"intent\": \"book_appointment\" } — no markdown fences, no explanation, just the JSON.\n\nCustomer Message: {{ $json.messages[0].text.body }}"
+        "text": "=Classify the following incoming text message from a salon customer into exactly one of these categories: [general_inquiry, book_appointment, reschedule_appointment, check_appointment, cancel_appointment].\n\nDefinitions:\n- general_inquiry: User asks about services, pricing, hours, location, policies, or standard conversation.\n- book_appointment: User wants to schedule a new appointment or book a treatment.\n- reschedule_appointment: User wants to change the date, time, or staff of an existing appointment.\n- check_appointment: User wants to know details of their upcoming appointment.\n- cancel_appointment: User explicitly asks to cancel, delete, or remove their booking.\n\nReturn ONLY a raw JSON string like this: { \"intent\": \"book_appointment\" } — no markdown fences, no explanation, just the JSON.\n\nCustomer Message: {{ $('Parse Interactive Response').item.json._parsed.textBody }}",
+        "options": {}
       },
       "id": "node-intent-detection",
       "name": "Intent Detection Node",
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
-      "position": [
-        -450,
-        50
-      ],
+      "position": [-350, 50],
       "typeVersion": 1.5,
-      "notes": "Classifies customer intent using Llama 3.3 70B via LangChain Basic LLM Chain."
+      "notes": "Classifies customer intent using Llama 3.3 70B."
     },
     {
       "parameters": {
-        "jsCode": "const responseText = $input.first().json.text || '';\ntry {\n  // Strip markdown fences if model adds them despite instructions\n  const cleaned = responseText.replace(/```json?/gi, '').replace(/```/g, '').trim();\n  const parsed = JSON.parse(cleaned);\n  return [{ json: { intent: parsed.intent || 'general_inquiry' } }];\n} catch (e) {\n  // Fallback: scan text for any known intent keyword\n  const text = responseText.toLowerCase();\n  if (text.includes('book_appointment')) return [{ json: { intent: 'book_appointment' } }];\n  if (text.includes('cancel_appointment')) return [{ json: { intent: 'cancel_appointment' } }];\n  if (text.includes('reschedule_appointment')) return [{ json: { intent: 'reschedule_appointment' } }];\n  if (text.includes('check_appointment')) return [{ json: { intent: 'check_appointment' } }];\n  return [{ json: { intent: 'general_inquiry' } }];\n}"
+        "jsCode": "const responseText = $input.first().json.text || '';\ntry {\n  const cleaned = responseText.replace(/```json?/gi, '').replace(/```/g, '').trim();\n  const parsed = JSON.parse(cleaned);\n  return [{ json: { intent: parsed.intent || 'general_inquiry' } }];\n} catch (e) {\n  const text = responseText.toLowerCase();\n  if (text.includes('book_appointment')) return [{ json: { intent: 'book_appointment' } }];\n  if (text.includes('cancel_appointment')) return [{ json: { intent: 'cancel_appointment' } }];\n  if (text.includes('reschedule_appointment')) return [{ json: { intent: 'reschedule_appointment' } }];\n  if (text.includes('check_appointment')) return [{ json: { intent: 'check_appointment' } }];\n  return [{ json: { intent: 'general_inquiry' } }];\n}"
       },
       "id": "node-parse-intent",
       "name": "Parse Intent Response",
       "type": "n8n-nodes-base.code",
-      "position": [
-        -250,
-        50
-      ],
+      "position": [-150, 50],
       "typeVersion": 2
     },
     {
       "parameters": {
-        "model": {
-          "__rl": true,
-          "value": "llama-3.3-70b-versatile",
-          "mode": "list",
-          "cachedResultName": "llama-3.3-70b-versatile"
-        },
+        "model": { "__rl": true, "value": "llama-3.3-70b-versatile", "mode": "list", "cachedResultName": "llama-3.3-70b-versatile" },
         "builtInTools": {},
-        "options": {
-          "temperature": 0.1
-        }
+        "options": { "temperature": 0.1 }
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
-      "position": [
-        -450,
-        200
-      ],
+      "position": [-350, 200],
       "id": "node-intent-llm-model",
       "name": "Intent LLM Model",
-      "credentials": {
-        "openAiApi": {
-          "id": "X67LyGhcGJFdkN37",
-          "name": "OpenAI account"
-        }
-      }
+      "credentials": { "openAiApi": { "id": "X67LyGhcGJFdkN37", "name": "OpenAI account" } }
     },
-
     {
       "parameters": {
         "rules": {
           "values": [
-            {
-              "conditions": {
-                "combinator": "and",
-                "conditions": [
-                  {
-                    "leftValue": "={{ $json.intent }}",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    },
-                    "rightValue": "general_inquiry"
-                  }
-                ]
-              },
-              "renameOutput": true,
-              "outputKey": "General Q&A"
-            },
-            {
-              "conditions": {
-                "combinator": "and",
-                "conditions": [
-                  {
-                    "leftValue": "={{ $json.intent }}",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    },
-                    "rightValue": "book_appointment"
-                  }
-                ]
-              },
-              "renameOutput": true,
-              "outputKey": "Booking Flow"
-            },
-            {
-              "conditions": {
-                "combinator": "and",
-                "conditions": [
-                  {
-                    "leftValue": "={{ $json.intent }}",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    },
-                    "rightValue": "reschedule_appointment"
-                  }
-                ]
-              },
-              "renameOutput": true,
-              "outputKey": "Reschedule Flow"
-            },
-            {
-              "conditions": {
-                "combinator": "and",
-                "conditions": [
-                  {
-                    "leftValue": "={{ $json.intent }}",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    },
-                    "rightValue": "cancel_appointment"
-                  }
-                ]
-              },
-              "renameOutput": true,
-              "outputKey": "Cancellation Flow"
-            },
-            {
-              "conditions": {
-                "combinator": "and",
-                "conditions": [
-                  {
-                    "leftValue": "={{ $json.intent }}",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    },
-                    "rightValue": "check_appointment"
-                  }
-                ]
-              },
-              "renameOutput": true,
-              "outputKey": "Status Check Flow"
-            }
+            { "conditions": { "combinator": "and", "conditions": [{ "leftValue": "={{ $json.intent }}", "operator": { "type": "string", "operation": "equals" }, "rightValue": "general_inquiry" }] }, "renameOutput": true, "outputKey": "General Q&A" },
+            { "conditions": { "combinator": "and", "conditions": [{ "leftValue": "={{ $json.intent }}", "operator": { "type": "string", "operation": "equals" }, "rightValue": "book_appointment" }] }, "renameOutput": true, "outputKey": "Booking Flow" },
+            { "conditions": { "combinator": "and", "conditions": [{ "leftValue": "={{ $json.intent }}", "operator": { "type": "string", "operation": "equals" }, "rightValue": "reschedule_appointment" }] }, "renameOutput": true, "outputKey": "Reschedule Flow" },
+            { "conditions": { "combinator": "and", "conditions": [{ "leftValue": "={{ $json.intent }}", "operator": { "type": "string", "operation": "equals" }, "rightValue": "cancel_appointment" }] }, "renameOutput": true, "outputKey": "Cancellation Flow" },
+            { "conditions": { "combinator": "and", "conditions": [{ "leftValue": "={{ $json.intent }}", "operator": { "type": "string", "operation": "equals" }, "rightValue": "check_appointment" }] }, "renameOutput": true, "outputKey": "Status Check Flow" }
           ]
         },
         "options": {}
@@ -461,103 +252,205 @@
       "id": "node-intent-router",
       "name": "Route by Intent",
       "type": "n8n-nodes-base.switch",
-      "position": [
-        -50,
-        50
-      ],
+      "position": [50, 50],
       "typeVersion": 3.2
     },
     {
       "parameters": {
         "promptType": "define",
-        "text": "=Analyze the user request and extract any of these appointment booking details. If not mentioned, output null for that field:\n1. fullName (Client full name)\n2. serviceName (Name of service like Gel Manicure Deluxe, Luxury Pedicure, Full Gel Nail Extensions, Botox Aesthetic Session, Lip Dermal Filler Session)\n3. preferredDate (Target booking date formatted as YYYY-MM-DD)\n4. preferredTime (Target booking time formatted as HH:MM)\n5. paymentMethod (cash, card, online)\n6. paymentStatus (pending or paid, defaults to pending)\n7. notes (technician request or custom request)\n\nReturn ONLY a raw JSON string like this: { \"fullName\": null, \"serviceName\": \"Gel Manicure Deluxe\", \"preferredDate\": \"2026-06-01\", \"preferredTime\": \"14:00\", \"paymentMethod\": null, \"paymentStatus\": \"pending\", \"notes\": null } — no markdown fences, no explanation.\n\nCustomer Message: {{ $('WhatsApp Trigger1').item.json.messages[0].text.body }}"
+        "text": "=Analyze the user request and extract any of these appointment booking details. If not mentioned, output null for that field:\n1. fullName (Client full name)\n2. serviceName (Name of service like Gel Manicure Deluxe, Luxury Pedicure, Full Gel Nail Extensions, Botox Aesthetic Session, Lip Dermal Filler Session)\n3. preferredDate (Target booking date formatted as YYYY-MM-DD)\n4. preferredTime (Target booking time formatted as HH:MM)\n5. paymentMethod (cash, card, online)\n6. paymentStatus (pending or paid, defaults to pending)\n7. notes (technician request or custom request)\n\nReturn ONLY a raw JSON string like this: { \"fullName\": null, \"serviceName\": \"Gel Manicure Deluxe\", \"preferredDate\": \"2026-06-01\", \"preferredTime\": \"14:00\", \"paymentMethod\": null, \"paymentStatus\": \"pending\", \"notes\": null } — no markdown fences, no explanation.\n\nCustomer Message: {{ $('Parse Interactive Response').item.json._parsed.textBody }}",
+        "options": {}
       },
       "id": "node-extract-details",
       "name": "Extract Booking Details",
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
-      "position": [
-        150,
-        150
-      ],
+      "position": [250, 150],
       "typeVersion": 1.5,
       "notes": "Extracts booking variables from the customer's WhatsApp text using Llama 3.3 70B."
     },
     {
       "parameters": {
-        "model": {
-          "__rl": true,
-          "value": "llama-3.3-70b-versatile",
-          "mode": "list",
-          "cachedResultName": "llama-3.3-70b-versatile"
-        },
+        "model": { "__rl": true, "value": "llama-3.3-70b-versatile", "mode": "list", "cachedResultName": "llama-3.3-70b-versatile" },
         "builtInTools": {},
-        "options": {
-          "temperature": 0.1
-        }
+        "options": { "temperature": 0.1 }
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
-      "position": [
-        150,
-        300
-      ],
+      "position": [250, 300],
       "id": "node-extract-llm-model",
       "name": "Extract LLM Model",
-      "credentials": {
-        "openAiApi": {
-          "id": "X67LyGhcGJFdkN37",
-          "name": "OpenAI account"
-        }
-      }
+      "credentials": { "openAiApi": { "id": "X67LyGhcGJFdkN37", "name": "OpenAI account" } }
     },
-
     {
       "parameters": {
-        "jsCode": "const phone = $node['WhatsApp Trigger1'].json.messages[0].from;\nconst responseText = $input.first().json.text || '{}';\n// Strip markdown fences if model adds them\nconst cleaned = responseText.replace(/```json?/gi, '').replace(/```/g, '').trim();\nlet rawExtract = {};\ntry { rawExtract = JSON.parse(cleaned); } catch (e) { rawExtract = {}; }\n\n// We access n8n static data representing our long-term session cache for each phone number\nconst staticData = getWorkflowStaticData('global');\nif (!staticData.sessions) staticData.sessions = {};\nif (!staticData.sessions[phone]) {\n  staticData.sessions[phone] = {\n    fullName: null,\n    phoneNumber: phone,\n    serviceName: null,\n    preferredDate: null,\n    preferredTime: null,\n    paymentMethod: 'cash',\n    paymentStatus: 'pending',\n    notes: null\n  };\n}\n\nconst session = staticData.sessions[phone];\n\n// Merge newly extracted variables only if they are not null\nif (rawExtract.fullName) session.fullName = rawExtract.fullName;\nif (rawExtract.serviceName) session.serviceName = rawExtract.serviceName;\nif (rawExtract.preferredDate) session.preferredDate = rawExtract.preferredDate;\nif (rawExtract.preferredTime) session.preferredTime = rawExtract.preferredTime;\nif (rawExtract.paymentMethod) session.paymentMethod = rawExtract.paymentMethod;\nif (rawExtract.paymentStatus) session.paymentStatus = rawExtract.paymentStatus;\nif (rawExtract.notes) session.notes = rawExtract.notes;\n\nreturn [{ json: { session, phone } }];"
+        "url": "={{$env.BACKEND_API_URL}}/api/booking-sessions/{{ $node['WhatsApp Trigger1'].json.messages[0].from }}",
+        "method": "GET",
+        "sendHeaders": true,
+        "headers": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{$env.BACKEND_JWT_TOKEN}}" }
+          ]
+        },
+        "options": { "response": { "response": { "neverError": true } } }
+      },
+      "id": "node-fetch-session",
+      "name": "Fetch Session from Backend",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [450, 150],
+      "typeVersion": 4.1,
+      "notes": "Fetches existing booking session from Supabase via backend API. Returns null if no active session."
+    },
+    {
+      "parameters": {
+        "jsCode": "const phone = $node['WhatsApp Trigger1'].json.messages[0].from;\nconst responseText = $node['Extract Booking Details'].first().json.text || '{}';\n// Strip markdown fences if model adds them\nconst cleaned = responseText.replace(/```json?/gi, '').replace(/```/g, '').trim();\nlet rawExtract = {};\ntry { rawExtract = JSON.parse(cleaned); } catch (e) { rawExtract = {}; }\n\n// Check if this was an interactive response and override extracted fields\nconst parsed = $node['Parse Interactive Response'].json._parsed || {};\nif (parsed.isInteractive && parsed.interactiveId) {\n  const id = parsed.interactiveId;\n  const serviceMap = {\n    'svc_gel_manicure': 'Gel Manicure Deluxe',\n    'svc_luxury_pedicure': 'Luxury Pedicure',\n    'svc_gel_extensions': 'Full Gel Nail Extensions',\n    'svc_botox': 'Botox Aesthetic Session',\n    'svc_lip_filler': 'Lip Dermal Filler Session'\n  };\n  if (serviceMap[id]) {\n    rawExtract.serviceName = serviceMap[id];\n  }\n  if (id.startsWith('slot_')) {\n    const timeParts = id.replace('slot_', '').split('_');\n    if (timeParts.length === 2) {\n      rawExtract.preferredTime = `${timeParts[0]}:${timeParts[1]}`;\n    }\n  }\n}\n\n// Read existing session from the Fetch Session HTTP response\nconst fetchResponse = $input.first().json;\nconst existingSession = (fetchResponse && fetchResponse.data) ? fetchResponse.data : null;\n\n// Build session: start with defaults, layer existing DB session, then newly extracted data\nconst session = {\n  fullName: null,\n  phoneNumber: phone,\n  serviceName: null,\n  preferredDate: null,\n  preferredTime: null,\n  paymentMethod: 'cash',\n  paymentStatus: 'pending',\n  notes: null\n};\n\n// Merge existing session from Supabase\nif (existingSession) {\n  if (existingSession.full_name) session.fullName = existingSession.full_name;\n  if (existingSession.service_name) session.serviceName = existingSession.service_name;\n  if (existingSession.preferred_date) session.preferredDate = existingSession.preferred_date;\n  if (existingSession.preferred_time) session.preferredTime = existingSession.preferred_time;\n  if (existingSession.payment_method) session.paymentMethod = existingSession.payment_method;\n  if (existingSession.payment_status) session.paymentStatus = existingSession.payment_status;\n  if (existingSession.notes) session.notes = existingSession.notes;\n}\n\n// Merge newly extracted variables (overrides existing if not null)\nif (rawExtract.fullName) session.fullName = rawExtract.fullName;\nif (rawExtract.serviceName) session.serviceName = rawExtract.serviceName;\nif (rawExtract.preferredDate) session.preferredDate = rawExtract.preferredDate;\nif (rawExtract.preferredTime) session.preferredTime = rawExtract.preferredTime;\nif (rawExtract.paymentMethod) session.paymentMethod = rawExtract.paymentMethod;\nif (rawExtract.paymentStatus) session.paymentStatus = rawExtract.paymentStatus;\nif (rawExtract.notes) session.notes = rawExtract.notes;\n\nreturn [{ json: { session, phone } }];"
       },
       "id": "node-merge-state",
       "name": "Merge State Node",
       "type": "n8n-nodes-base.code",
-      "position": [
-        350,
-        150
-      ],
+      "position": [650, 150],
       "typeVersion": 2,
-      "notes": "Maintains conversation memory state machines in n8n workflow static variables."
+      "notes": "Pure data transform — merges existing session from Supabase with newly extracted data. No getWorkflowStaticData."
     },
     {
       "parameters": {
-        "jsCode": "const { session, phone } = $input.first().json;\n\n// Checking the missing fields sequentially\nlet missingField = null;\nlet promptMessage = '';\n\nif (!session.fullName) {\n  missingField = 'fullName';\n  promptMessage = \"Thank you for reaching out to Lumière Med Spa! 🌸 I'd love to help you book an appointment. Could you please share your full name first?\";\n} else if (!session.serviceName) {\n  missingField = 'serviceName';\n  promptMessage = `Hi ${session.fullName}! ✨ What treatment would you like to book?\\n\\nOur services:\\n💅 Gel Manicure Deluxe — $45\\n🦶 Luxury Pedicure — $60\\n💎 Full Gel Nail Extensions — $85\\n💉 Botox Aesthetic Session — $350\\n👄 Lip Dermal Filler Session — $480\\n\\nJust type the name of the treatment you'd like!`;\n} else if (!session.preferredDate) {\n  missingField = 'preferredDate';\n  promptMessage = `Got it! A ${session.serviceName}. 📅 What date would you prefer for your visit? (e.g. YYYY-MM-DD, tomorrow, or this Saturday)`;\n} else if (!session.preferredTime) {\n  missingField = 'preferredTime';\n  promptMessage = \"And what time fits your schedule? 🕒\\nWe're open Mon–Sat 9:00 AM–7:00 PM and Sunday 10:00 AM–5:00 PM.\\n(e.g., 2:30 PM, 11:00 AM)\";\n}\n\nconst isComplete = !missingField;\n\nreturn [{ json: { isComplete, missingField, promptMessage, session, phone } }];"
+        "url": "={{$env.BACKEND_API_URL}}/api/booking-sessions/{{ $json.phone }}",
+        "method": "PUT",
+        "sendHeaders": true,
+        "headers": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{$env.BACKEND_JWT_TOKEN}}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"fullName\": {{ $json.session.fullName ? '\"' + $json.session.fullName + '\"' : 'null' }},\n  \"serviceName\": {{ $json.session.serviceName ? '\"' + $json.session.serviceName + '\"' : 'null' }},\n  \"preferredDate\": {{ $json.session.preferredDate ? '\"' + $json.session.preferredDate + '\"' : 'null' }},\n  \"preferredTime\": {{ $json.session.preferredTime ? '\"' + $json.session.preferredTime + '\"' : 'null' }},\n  \"paymentMethod\": \"{{ $json.session.paymentMethod || 'cash' }}\",\n  \"paymentStatus\": \"{{ $json.session.paymentStatus || 'pending' }}\",\n  \"notes\": {{ $json.session.notes ? '\"' + $json.session.notes + '\"' : 'null' }}\n}",
+        "options": { "response": { "response": { "neverError": true } } }
+      },
+      "id": "node-save-session",
+      "name": "Save Session to Backend",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [850, 300],
+      "typeVersion": 4.1,
+      "notes": "Upserts booking session to Supabase via backend API after merging state."
+    },
+    {
+      "parameters": {
+        "jsCode": "const { session, phone } = $input.first().json;\n\nlet missingField = null;\nlet promptMessage = '';\n\nif (!session.fullName) {\n  missingField = 'fullName';\n  promptMessage = \"Thank you for reaching out to Lumière Med Spa! 🌸 I'd love to help you book an appointment. Could you please share your full name first?\";\n} else if (!session.serviceName) {\n  missingField = 'serviceName';\n  promptMessage = `Hi ${session.fullName}! ✨ Please select a treatment from the list below:`;\n} else if (!session.preferredDate) {\n  missingField = 'preferredDate';\n  promptMessage = `Got it! A ${session.serviceName}. 📅 What date would you prefer for your visit? (e.g. YYYY-MM-DD, tomorrow, or this Saturday)`;\n} else if (!session.preferredTime) {\n  missingField = 'preferredTime';\n  promptMessage = `Checking available time slots for ${session.serviceName} on ${session.preferredDate}...`;\n}\n\nconst isComplete = !missingField;\n\nreturn [{ json: { isComplete, missingField, promptMessage, session, phone } }];"
       },
       "id": "node-questionnaire-state",
       "name": "Collect User Details Node",
       "type": "n8n-nodes-base.code",
-      "position": [
-        550,
-        150
-      ],
+      "position": [850, 150],
       "typeVersion": 2,
-      "notes": "State machine that evaluates variables. Prompts next question sequentially if data is missing."
+      "notes": "State machine that evaluates variables. Routes to interactive list selection for service and time, text prompt for name and date."
     },
     {
       "parameters": {
         "conditions": {
-          "boolean": [
-            {
-              "value1": "={{ $json.isComplete }}",
-              "value2": true
-            }
-          ]
+          "boolean": [{ "value1": "={{ $json.isComplete }}", "value2": true }]
         }
       },
       "id": "node-complete-switch",
       "name": "Is Questionnaire Complete?",
       "type": "n8n-nodes-base.if",
-      "position": [
-        750,
-        150
-      ],
+      "position": [1050, 150],
       "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            { "conditions": { "combinator": "and", "conditions": [{ "leftValue": "={{ $json.missingField }}", "operator": { "type": "string", "operation": "equals" }, "rightValue": "serviceName" }] }, "renameOutput": true, "outputKey": "Service Selection" },
+            { "conditions": { "combinator": "and", "conditions": [{ "leftValue": "={{ $json.missingField }}", "operator": { "type": "string", "operation": "equals" }, "rightValue": "preferredTime" }] }, "renameOutput": true, "outputKey": "Time Slot Selection" },
+            { "conditions": { "combinator": "and", "conditions": [{ "leftValue": "={{ $json.missingField }}", "operator": { "type": "string", "operation": "notEquals" }, "rightValue": "serviceName" }, { "leftValue": "={{ $json.missingField }}", "operator": { "type": "string", "operation": "notEquals" }, "rightValue": "preferredTime" }] }, "renameOutput": true, "outputKey": "Text Prompt" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-route-missing-field",
+      "name": "Route Missing Field",
+      "type": "n8n-nodes-base.switch",
+      "position": [1250, -50],
+      "typeVersion": 3.2,
+      "notes": "Routes to interactive list for service/time selection, or text reply for name/date prompts."
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v21.0/1093698253829228/messages",
+        "method": "POST",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "whatsAppApi",
+        "sendHeaders": true,
+        "headers": { "parameters": [{ "name": "Content-Type", "value": "application/json" }] },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"recipient_type\": \"individual\",\n  \"to\": \"{{ $json.phone }}\",\n  \"type\": \"interactive\",\n  \"interactive\": {\n    \"type\": \"list\",\n    \"header\": {\n      \"type\": \"text\",\n      \"text\": \"✨ Our Services\"\n    },\n    \"body\": {\n      \"text\": \"Hi {{ $json.session.fullName }}! Please select a treatment you'd like to book at Lumière Med Spa 🌸\"\n    },\n    \"footer\": {\n      \"text\": \"Lumière Med Spa · 45 Blossom Avenue\"\n    },\n    \"action\": {\n      \"button\": \"View Services\",\n      \"sections\": [\n        {\n          \"title\": \"💅 Nail Services\",\n          \"rows\": [\n            { \"id\": \"svc_gel_manicure\", \"title\": \"Gel Manicure Deluxe\", \"description\": \"$45 · 45 min · Esthetician Maya\" },\n            { \"id\": \"svc_luxury_pedicure\", \"title\": \"Luxury Pedicure\", \"description\": \"$60 · 60 min · Esthetician Maya\" },\n            { \"id\": \"svc_gel_extensions\", \"title\": \"Full Gel Nail Extensions\", \"description\": \"$85 · 75 min · Beautician Lisa\" }\n          ]\n        },\n        {\n          \"title\": \"💉 Aesthetic Treatments\",\n          \"rows\": [\n            { \"id\": \"svc_botox\", \"title\": \"Botox Aesthetic Session\", \"description\": \"$350 · 30 min · Dr. Reeves\" },\n            { \"id\": \"svc_lip_filler\", \"title\": \"Lip Dermal Filler Session\", \"description\": \"$480 · 45 min · Dr. Reeves\" }\n          ]\n        }\n      ]\n    }\n  }\n}"
+      },
+      "id": "node-send-service-list",
+      "name": "Send Service Selection List",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1450, -150],
+      "typeVersion": 4.1,
+      "credentials": {
+        "whatsAppApi": { "id": "m3O3H7hZRxW8O5Xm", "name": "WhatsApp account Milind" }
+      },
+      "notes": "Sends WhatsApp Cloud API Interactive List Message for service selection."
+    },
+    {
+      "parameters": {
+        "url": "={{$env.BACKEND_API_URL}}/api/appointments/available-slots",
+        "method": "GET",
+        "sendHeaders": true,
+        "headers": { "parameters": [{ "name": "Authorization", "value": "=Bearer {{$env.BACKEND_JWT_TOKEN}}" }] },
+        "sendQueryParameters": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "date", "value": "={{ $json.session.preferredDate }}" },
+            { "name": "serviceName", "value": "={{ $json.session.serviceName }}" }
+          ]
+        },
+        "options": { "response": { "response": { "neverError": true } } }
+      },
+      "id": "node-get-available-slots",
+      "name": "Get Available Time Slots",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1450, -20],
+      "typeVersion": 4.1,
+      "notes": "Calls backend GET /api/appointments/available-slots to fetch open time slots."
+    },
+    {
+      "parameters": {
+        "jsCode": "const phone = $node['Collect User Details Node'].json.phone;\nconst session = $node['Collect User Details Node'].json.session;\nconst apiResponse = $input.first().json;\n\n// Extract available slots from backend response\nlet slots = [];\nif (apiResponse.slots && Array.isArray(apiResponse.slots)) {\n  slots = apiResponse.slots;\n} else if (apiResponse.data && Array.isArray(apiResponse.data)) {\n  slots = apiResponse.data;\n} else if (Array.isArray(apiResponse)) {\n  slots = apiResponse;\n}\n\n// If no slots from API, generate default working-hour slots\nif (slots.length === 0) {\n  slots = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30'];\n}\n\n// WhatsApp interactive list max 10 rows\nconst limitedSlots = slots.slice(0, 10);\n\nfunction formatTime(slot) {\n  const timeStr = typeof slot === 'string' ? slot : (slot.time || slot.startTime || slot.slot || '');\n  if (!timeStr) return { raw: '09:00', display: '9:00 AM' };\n  const parts = timeStr.split(':');\n  const h = parseInt(parts[0]);\n  const m = parts[1] || '00';\n  const ampm = h >= 12 ? 'PM' : 'AM';\n  const h12 = h > 12 ? h - 12 : (h === 0 ? 12 : h);\n  return { raw: `${parts[0]}:${m}`, display: `${h12}:${m} ${ampm}` };\n}\n\nconst rows = limitedSlots.map(slot => {\n  const t = formatTime(slot);\n  const rawParts = t.raw.split(':');\n  return {\n    id: `slot_${rawParts[0]}_${rawParts[1]}`,\n    title: t.display,\n    description: `${session.serviceName} on ${session.preferredDate}`\n  };\n});\n\nconst interactivePayload = {\n  messaging_product: 'whatsapp',\n  recipient_type: 'individual',\n  to: phone,\n  type: 'interactive',\n  interactive: {\n    type: 'list',\n    header: { type: 'text', text: '🕒 Available Time Slots' },\n    body: { text: `Here are the available time slots for ${session.serviceName} on ${session.preferredDate}. Tap to select your preferred time! 🌸` },\n    footer: { text: 'Lumière Med Spa · Mon-Sat 9AM-7PM, Sun 10AM-5PM' },\n    action: {\n      button: 'View Time Slots',\n      sections: [{ title: '⏰ Available Times', rows: rows }]\n    }\n  }\n};\n\nreturn [{ json: { payload: interactivePayload, phone, session } }];"
+      },
+      "id": "node-build-timeslot-list",
+      "name": "Build Time Slot List",
+      "type": "n8n-nodes-base.code",
+      "position": [1650, -20],
+      "typeVersion": 2,
+      "notes": "Transforms backend availability response into WhatsApp Interactive List Message payload."
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v21.0/1093698253829228/messages",
+        "method": "POST",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "whatsAppApi",
+        "sendHeaders": true,
+        "headers": { "parameters": [{ "name": "Content-Type", "value": "application/json" }] },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.payload) }}"
+      },
+      "id": "node-send-timeslot-list",
+      "name": "Send Time Slot Selection",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1850, -20],
+      "typeVersion": 4.1,
+      "credentials": {
+        "whatsAppApi": { "id": "m3O3H7hZRxW8O5Xm", "name": "WhatsApp account Milind" }
+      },
+      "notes": "Sends WhatsApp Cloud API Interactive List Message for time slot selection."
     },
     {
       "parameters": {
@@ -565,41 +458,27 @@
         "phoneNumberId": "1093698253829228",
         "recipientPhoneNumber": "={{ $json.phone }}",
         "textBody": "={{ $json.promptMessage }}",
-        "additionalFields": {
-          "previewUrl": false
-        }
+        "additionalFields": { "previewUrl": false }
       },
       "id": "node-reply-question",
       "name": "Reply Next Question",
       "type": "n8n-nodes-base.whatsApp",
-      "position": [
-        950,
-        50
-      ],
+      "position": [1450, 100],
       "typeVersion": 1,
       "webhookId": "whatsapp-reply-question",
       "credentials": {
-        "whatsAppApi": {
-          "id": "m3O3H7hZRxW8O5Xm",
-          "name": "WhatsApp account Milind"
-        }
+        "whatsAppApi": { "id": "m3O3H7hZRxW8O5Xm", "name": "WhatsApp account Milind" }
       }
     },
     {
       "parameters": {
-        "url": "={{$env.BACKEND_API_URL || 'http://localhost:3001'}}/api/clients",
+        "url": "={{$env.BACKEND_API_URL}}/api/clients",
         "method": "POST",
         "sendHeaders": true,
         "headers": {
           "parameters": [
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{$env.BACKEND_JWT_TOKEN}}"
-            },
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
+            { "name": "Authorization", "value": "=Bearer {{$env.BACKEND_JWT_TOKEN}}" },
+            { "name": "Content-Type", "value": "application/json" }
           ]
         },
         "sendBody": true,
@@ -609,28 +488,19 @@
       "id": "node-api-sync-client",
       "name": "API Sync Client Profile",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [
-        950,
-        250
-      ],
+      "position": [1250, 250],
       "typeVersion": 4.1,
-      "notes": "Syncs the client record. Gracefully returns client profile if returning or inserts if new."
+      "notes": "Syncs the client record."
     },
     {
       "parameters": {
-        "url": "={{$env.BACKEND_API_URL || 'http://localhost:3001'}}/api/appointments",
+        "url": "={{$env.BACKEND_API_URL}}/api/appointments",
         "method": "POST",
         "sendHeaders": true,
         "headers": {
           "parameters": [
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{$env.BACKEND_JWT_TOKEN}}"
-            },
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
+            { "name": "Authorization", "value": "=Bearer {{$env.BACKEND_JWT_TOKEN}}" },
+            { "name": "Content-Type", "value": "application/json" }
           ]
         },
         "sendBody": true,
@@ -640,10 +510,7 @@
       "id": "node-api-create-booking",
       "name": "API Register Booking",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [
-        1150,
-        250
-      ],
+      "position": [1450, 250],
       "typeVersion": 4.1,
       "notes": "Creates booking slot. Backend checks working hours, calendars, conflicts, syncs Google Calendar & audits."
     },
@@ -651,40 +518,8 @@
       "parameters": {
         "rules": {
           "values": [
-            {
-              "conditions": {
-                "combinator": "and",
-                "conditions": [
-                  {
-                    "leftValue": "={{ $json.status }}",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    },
-                    "rightValue": "success"
-                  }
-                ]
-              },
-              "renameOutput": true,
-              "outputKey": "Success"
-            },
-            {
-              "conditions": {
-                "combinator": "and",
-                "conditions": [
-                  {
-                    "leftValue": "={{ $json.status }}",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    },
-                    "rightValue": "conflict"
-                  }
-                ]
-              },
-              "renameOutput": true,
-              "outputKey": "Collision Conflict"
-            }
+            { "conditions": { "combinator": "and", "conditions": [{ "leftValue": "={{ $json.status }}", "operator": { "type": "string", "operation": "equals" }, "rightValue": "success" }] }, "renameOutput": true, "outputKey": "Success" },
+            { "conditions": { "combinator": "and", "conditions": [{ "leftValue": "={{ $json.status }}", "operator": { "type": "string", "operation": "equals" }, "rightValue": "conflict" }] }, "renameOutput": true, "outputKey": "Collision Conflict" }
           ]
         },
         "options": {}
@@ -692,50 +527,40 @@
       "id": "node-api-status-router",
       "name": "Check API Outcome",
       "type": "n8n-nodes-base.switch",
-      "position": [
-        1350,
-        250
-      ],
+      "position": [1650, 250],
       "typeVersion": 3.2
     },
     {
       "parameters": {
-        "jsCode": "const phone = $node['Collect User Details Node'].json.phone;\nconst staticData = getWorkflowStaticData('global');\ndelete staticData.sessions[phone]; // Empty session state since booking finished!\nreturn [{ json: $input.first().json }];"
+        "url": "={{$env.BACKEND_API_URL}}/api/booking-sessions/{{ $('Collect User Details Node').item.json.phone }}",
+        "method": "DELETE",
+        "sendHeaders": true,
+        "headers": { "parameters": [{ "name": "Authorization", "value": "=Bearer {{$env.BACKEND_JWT_TOKEN}}" }] },
+        "options": { "response": { "response": { "neverError": true } } }
       },
       "id": "node-reset-booking-session",
       "name": "Reset Booking State",
-      "type": "n8n-nodes-base.code",
-      "position": [
-        1550,
-        150
-      ],
-      "typeVersion": 2,
-      "notes": "Resets memory buffer for phone number upon booking success."
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1850, 150],
+      "typeVersion": 4.1,
+      "notes": "Deletes booking session from Supabase after successful booking. Replaces getWorkflowStaticData delete."
     },
     {
       "parameters": {
         "operation": "send",
         "phoneNumberId": "1093698253829228",
         "recipientPhoneNumber": "={{ $('Collect User Details Node').item.json.phone }}",
-        "textBody": "=🎉 Your appointment at *Lumière Med Spa* is confirmed! ✨\\n\\n💅 Service: {{ $json.data.service_name }}\\n📅 Date: {{ new Date($json.data.appointment_date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) }}\\n🕒 Time: {{ $('Collect User Details Node').item.json.session.preferredTime }}\\n💳 Payment: {{ $('Collect User Details Node').item.json.session.paymentMethod || 'Cash' }} ({{ $('Collect User Details Node').item.json.session.paymentStatus || 'Pending' }})\\n📍 Address: 45 Blossom Avenue, Suite 200\\n\\nPlease arrive 5 minutes early. We look forward to seeing you! 🌸\\n\\nNeed to reschedule? Simply reply *RESCHEDULE*.",
-        "additionalFields": {
-          "previewUrl": false
-        }
+        "textBody": "=🎉 Your appointment at *Lumière Med Spa* is confirmed! ✨\\n\\n💅 Service: {{ $('Collect User Details Node').item.json.session.serviceName }}\\n📅 Date: {{ $('Collect User Details Node').item.json.session.preferredDate }}\\n🕒 Time: {{ $('Collect User Details Node').item.json.session.preferredTime }}\\n💳 Payment: {{ $('Collect User Details Node').item.json.session.paymentMethod || 'Cash' }} ({{ $('Collect User Details Node').item.json.session.paymentStatus || 'Pending' }})\\n📍 Address: 45 Blossom Avenue, Suite 200\\n\\nPlease arrive 5 minutes early. We look forward to seeing you! 🌸\\n\\nNeed to reschedule? Simply reply *RESCHEDULE*.",
+        "additionalFields": { "previewUrl": false }
       },
       "id": "node-reply-booking-success",
       "name": "Reply Confirm Booking",
       "type": "n8n-nodes-base.whatsApp",
-      "position": [
-        1750,
-        150
-      ],
+      "position": [2050, 150],
       "typeVersion": 1,
       "webhookId": "whatsapp-confirm-booking",
       "credentials": {
-        "whatsAppApi": {
-          "id": "m3O3H7hZRxW8O5Xm",
-          "name": "WhatsApp account Milind"
-        }
+        "whatsAppApi": { "id": "m3O3H7hZRxW8O5Xm", "name": "WhatsApp account Milind" }
       }
     },
     {
@@ -745,10 +570,7 @@
       "id": "node-format-suggestions",
       "name": "Format Time Suggestions",
       "type": "n8n-nodes-base.code",
-      "position": [
-        1550,
-        350
-      ],
+      "position": [1850, 350],
       "typeVersion": 2
     },
     {
@@ -757,156 +579,114 @@
         "phoneNumberId": "1093698253829228",
         "recipientPhoneNumber": "={{ $('Collect User Details Node').item.json.phone }}",
         "textBody": "={{ $json.text }}",
-        "additionalFields": {
-          "previewUrl": false
-        }
+        "additionalFields": { "previewUrl": false }
       },
       "id": "node-reply-suggestions",
       "name": "Reply Suggestions",
       "type": "n8n-nodes-base.whatsApp",
-      "position": [
-        1750,
-        350
-      ],
+      "position": [2050, 350],
       "typeVersion": 1,
       "webhookId": "whatsapp-reply-suggestions",
       "credentials": {
-        "whatsAppApi": {
-          "id": "m3O3H7hZRxW8O5Xm",
-          "name": "WhatsApp account Milind"
-        }
+        "whatsAppApi": { "id": "m3O3H7hZRxW8O5Xm", "name": "WhatsApp account Milind" }
       }
     },
     {
       "parameters": {
-        "jsCode": "const phone = $node['WhatsApp Trigger1'].json.messages[0].from;\nconst staticData = getWorkflowStaticData('global');\n\n// Wipe session state when canceling\nif (staticData.sessions && staticData.sessions[phone]) {\n  delete staticData.sessions[phone];\n}\nreturn [{ json: { phone, intent: 'cancel_appointment' } }];"
+        "jsCode": "const phone = $node['WhatsApp Trigger1'].json.messages[0].from;\nreturn [{ json: { phone, intent: 'cancel_appointment' } }];"
       },
       "id": "node-reset-cancel-state",
       "name": "Reset State on Cancel",
       "type": "n8n-nodes-base.code",
-      "position": [
-        150,
-        450
-      ],
-      "typeVersion": 2
+      "position": [250, 450],
+      "typeVersion": 2,
+      "notes": "Extracts phone and passes intent. Session cleanup done by separate HTTP DELETE node."
     },
     {
       "parameters": {
-        "jsCode": "const phone = $node['WhatsApp Trigger1'].json.messages[0].from;\nconst staticData = getWorkflowStaticData('global');\n\n// Wipe session state when checking status\nif (staticData.sessions && staticData.sessions[phone]) {\n  delete staticData.sessions[phone];\n}\nreturn [{ json: { phone, intent: 'check_appointment' } }];"
+        "url": "={{$env.BACKEND_API_URL}}/api/booking-sessions/{{ $json.phone }}",
+        "method": "DELETE",
+        "sendHeaders": true,
+        "headers": { "parameters": [{ "name": "Authorization", "value": "=Bearer {{$env.BACKEND_JWT_TOKEN}}" }] },
+        "options": { "response": { "response": { "neverError": true } } }
+      },
+      "id": "node-delete-session-cancel",
+      "name": "Delete Session Cancel",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [450, 520],
+      "typeVersion": 4.1,
+      "notes": "Cleans up any in-progress booking session when user cancels."
+    },
+    {
+      "parameters": {
+        "jsCode": "const phone = $node['WhatsApp Trigger1'].json.messages[0].from;\nreturn [{ json: { phone, intent: 'check_appointment' } }];"
       },
       "id": "node-reset-status-state",
       "name": "Reset State on Status Check",
       "type": "n8n-nodes-base.code",
-      "position": [
-        150,
-        600
-      ],
-      "typeVersion": 2
+      "position": [250, 600],
+      "typeVersion": 2,
+      "notes": "Extracts phone and passes intent. Session cleanup done by separate HTTP DELETE node."
     },
     {
       "parameters": {
-        "url": "={{$env.BACKEND_API_URL || 'http://localhost:3001'}}/api/appointments",
+        "url": "={{$env.BACKEND_API_URL}}/api/booking-sessions/{{ $json.phone }}",
+        "method": "DELETE",
+        "sendHeaders": true,
+        "headers": { "parameters": [{ "name": "Authorization", "value": "=Bearer {{$env.BACKEND_JWT_TOKEN}}" }] },
+        "options": { "response": { "response": { "neverError": true } } }
+      },
+      "id": "node-delete-session-status",
+      "name": "Delete Session Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [450, 670],
+      "typeVersion": 4.1,
+      "notes": "Cleans up any in-progress booking session when user checks status."
+    },
+    {
+      "parameters": {
+        "url": "={{$env.BACKEND_API_URL}}/api/appointments",
         "method": "GET",
         "sendHeaders": true,
-        "headers": {
-          "parameters": [
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{$env.BACKEND_JWT_TOKEN}}"
-            }
-          ]
-        },
+        "headers": { "parameters": [{ "name": "Authorization", "value": "=Bearer {{$env.BACKEND_JWT_TOKEN}}" }] },
         "sendQueryParameters": true,
-        "queryParameters": {
-          "parameters": [
-            {
-              "name": "status",
-              "value": "scheduled"
-            }
-          ]
-        }
+        "queryParameters": { "parameters": [{ "name": "status", "value": "scheduled" }] }
       },
       "id": "node-api-get-active-bookings",
       "name": "API Check Upcoming Bookings",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [
-        350,
-        520
-      ],
+      "position": [650, 520],
       "typeVersion": 4.1,
-      "notes": "Scans for existing active appointments to identify target cancellation or check status."
+      "notes": "Scans for existing active appointments."
     },
     {
       "parameters": {
-        "jsCode": "const resetCancel = $node['Reset State on Cancel'];\nconst resetStatus = $node['Reset State on Status Check'];\n\nconst phone = resetCancel ? resetCancel.json.phone : resetStatus.json.phone;\nconst intent = resetCancel ? resetCancel.json.intent : resetStatus.json.intent;\n\nconst appointments = $input.first().json.data || [];\n\n// Find active appointment matching client phone\nconst targetApp = appointments.find(app => app.clients && app.clients.phone_number === phone);\n\nreturn [{\n  json: {\n    phone,\n    intent,\n    appointmentFound: !!targetApp,\n    appointmentId: targetApp ? targetApp.id : null,\n    serviceName: targetApp ? targetApp.service_name : '',\n    appointmentDate: targetApp ? targetApp.appointment_date : '',\n    appointmentTime: targetApp ? targetApp.appointment_time : ''\n  }\n}];"
+        "jsCode": "const phone = $node['Reset State on Cancel'] ? $node['Reset State on Cancel'].json.phone : $node['Reset State on Status Check'].json.phone;\nconst intent = $node['Reset State on Cancel'] ? $node['Reset State on Cancel'].json.intent : $node['Reset State on Status Check'].json.intent;\n\nconst appointments = $input.first().json.data || [];\nconst targetApp = appointments.find(app => app.phone_number === phone);\n\nreturn [{\n  json: {\n    phone,\n    intent,\n    appointmentFound: !!targetApp,\n    appointmentId: targetApp ? targetApp.id : null,\n    serviceName: targetApp ? targetApp.service_name : '',\n    appointmentDate: targetApp ? targetApp.appointment_date : '',\n    appointmentTime: targetApp ? targetApp.appointment_time : ''\n  }\n}];"
       },
       "id": "node-find-booking",
       "name": "Identify Target Booking",
       "type": "n8n-nodes-base.code",
-      "position": [
-        550,
-        520
-      ],
+      "position": [850, 520],
       "typeVersion": 2
     },
     {
       "parameters": {
         "conditions": {
-          "boolean": [
-            {
-              "value1": "={{ $json.appointmentFound }}",
-              "value2": true
-            }
-          ]
+          "boolean": [{ "value1": "={{ $json.appointmentFound }}", "value2": true }]
         }
       },
       "id": "node-has-booking-switch",
       "name": "Found Booking?",
       "type": "n8n-nodes-base.if",
-      "position": [
-        750,
-        520
-      ],
+      "position": [1050, 520],
       "typeVersion": 1
     },
     {
       "parameters": {
         "rules": {
           "values": [
-            {
-              "conditions": {
-                "combinator": "and",
-                "conditions": [
-                  {
-                    "leftValue": "={{ $json.intent }}",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    },
-                    "rightValue": "cancel_appointment"
-                  }
-                ]
-              },
-              "renameOutput": true,
-              "outputKey": "Cancellation Path"
-            },
-            {
-              "conditions": {
-                "combinator": "and",
-                "conditions": [
-                  {
-                    "leftValue": "={{ $json.intent }}",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    },
-                    "rightValue": "check_appointment"
-                  }
-                ]
-              },
-              "renameOutput": true,
-              "outputKey": "Status Check Path"
-            }
+            { "conditions": { "combinator": "and", "conditions": [{ "leftValue": "={{ $json.intent }}", "operator": { "type": "string", "operation": "equals" }, "rightValue": "cancel_appointment" }] }, "renameOutput": true, "outputKey": "Cancellation Path" },
+            { "conditions": { "combinator": "and", "conditions": [{ "leftValue": "={{ $json.intent }}", "operator": { "type": "string", "operation": "equals" }, "rightValue": "check_appointment" }] }, "renameOutput": true, "outputKey": "Status Check Path" }
           ]
         },
         "options": {}
@@ -914,27 +694,18 @@
       "id": "node-cancel-vs-status-router",
       "name": "Is Cancel vs Status Check?",
       "type": "n8n-nodes-base.switch",
-      "position": [
-        950,
-        480
-      ],
+      "position": [1250, 480],
       "typeVersion": 3.2
     },
     {
       "parameters": {
-        "url": "={{$env.BACKEND_API_URL || 'http://localhost:3001'}}/api/appointments/{{ $json.appointmentId }}/cancel",
+        "url": "={{$env.BACKEND_API_URL}}/api/appointments/{{ $json.appointmentId }}/cancel",
         "method": "PUT",
         "sendHeaders": true,
         "headers": {
           "parameters": [
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{$env.BACKEND_JWT_TOKEN}}"
-            },
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
+            { "name": "Authorization", "value": "=Bearer {{$env.BACKEND_JWT_TOKEN}}" },
+            { "name": "Content-Type", "value": "application/json" }
           ]
         },
         "sendBody": true,
@@ -944,37 +715,26 @@
       "id": "node-api-cancel-booking",
       "name": "API Trigger Cancel",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [
-        1150,
-        440
-      ],
+      "position": [1450, 440],
       "typeVersion": 4.1,
-      "notes": "Pushes status update and cancels calendar event automatically in one step."
+      "notes": "Pushes status update and cancels calendar event."
     },
     {
       "parameters": {
         "operation": "send",
         "phoneNumberId": "1093698253829228",
-        "recipientPhoneNumber": "={{ $json.phone }}",
+        "recipientPhoneNumber": "={{ $json.phone || $('Identify Target Booking').item.json.phone }}",
         "textBody": "🌸 Done! Your upcoming appointment has been successfully cancelled. Whenever you're ready to book with us again, just type *book* and I'll be happy to assist you! — Lumière Med Spa",
-        "additionalFields": {
-          "previewUrl": false
-        }
+        "additionalFields": { "previewUrl": false }
       },
       "id": "node-reply-cancel-success",
       "name": "Reply Cancel Confirm",
       "type": "n8n-nodes-base.whatsApp",
-      "position": [
-        1350,
-        440
-      ],
+      "position": [1650, 440],
       "typeVersion": 1,
       "webhookId": "whatsapp-cancel-confirm",
       "credentials": {
-        "whatsAppApi": {
-          "id": "m3O3H7hZRxW8O5Xm",
-          "name": "WhatsApp account Milind"
-        }
+        "whatsAppApi": { "id": "m3O3H7hZRxW8O5Xm", "name": "WhatsApp account Milind" }
       }
     },
     {
@@ -982,25 +742,17 @@
         "operation": "send",
         "phoneNumberId": "1093698253829228",
         "recipientPhoneNumber": "={{ $json.phone }}",
-        "textBody": "=📅 Here's your upcoming appointment at *Lumière Med Spa*!\\n\\n💅 Service: {{ $json.serviceName }}\\n📅 Date: {{ new Date($json.appointmentDate).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) }}\\n🕒 Time: {{ $json.appointmentTime }}\\n📍 45 Blossom Avenue, Suite 200\\n\\nNeed to reschedule or cancel? Just let me know! 😊 — Lumière Med Spa",
-        "additionalFields": {
-          "previewUrl": false
-        }
+        "textBody": "=📅 Here's your upcoming appointment at *Lumière Med Spa*!\\n\\n💅 Service: {{ $json.serviceName }}\\n📅 Date: {{ $json.appointmentDate }}\\n🕒 Time: {{ $json.appointmentTime }}\\n📍 45 Blossom Avenue, Suite 200\\n\\nNeed to reschedule or cancel? Just let me know! 😊 — Lumière Med Spa",
+        "additionalFields": { "previewUrl": false }
       },
       "id": "node-reply-status-info",
       "name": "Reply Status Info",
       "type": "n8n-nodes-base.whatsApp",
-      "position": [
-        1150,
-        560
-      ],
+      "position": [1450, 560],
       "typeVersion": 1,
       "webhookId": "whatsapp-status-info",
       "credentials": {
-        "whatsAppApi": {
-          "id": "m3O3H7hZRxW8O5Xm",
-          "name": "WhatsApp account Milind"
-        }
+        "whatsAppApi": { "id": "m3O3H7hZRxW8O5Xm", "name": "WhatsApp account Milind" }
       }
     },
     {
@@ -1009,430 +761,169 @@
         "phoneNumberId": "1093698253829228",
         "recipientPhoneNumber": "={{ $json.phone }}",
         "textBody": "🌸 I couldn't locate any active upcoming appointments under your phone number. If you'd like to make a new booking, just type *book* and I'll guide you through it! — Lumière Med Spa",
-        "additionalFields": {
-          "previewUrl": false
-        }
+        "additionalFields": { "previewUrl": false }
       },
       "id": "node-reply-cancel-missing",
       "name": "Reply Cancel Missing",
       "type": "n8n-nodes-base.whatsApp",
-      "position": [
-        950,
-        640
-      ],
+      "position": [1250, 640],
       "typeVersion": 1,
       "webhookId": "whatsapp-cancel-missing",
       "credentials": {
-        "whatsAppApi": {
-          "id": "m3O3H7hZRxW8O5Xm",
-          "name": "WhatsApp account Milind"
-        }
+        "whatsAppApi": { "id": "m3O3H7hZRxW8O5Xm", "name": "WhatsApp account Milind" }
       }
     }
   ],
   "connections": {
-    "Embeddings Google Gemini": {
-      "ai_embedding": [
-        []
-      ]
-    },
-    "Google Gemini Chat Model": {
-      "ai_languageModel": [
-        []
-      ]
-    },
+    "Embeddings Google Gemini": { "ai_embedding": [[]] },
+    "Google Gemini Chat Model": { "ai_languageModel": [[]] },
     "WhatsApp Trigger1": {
-      "main": [
-        [
-          {
-            "node": "Handle Message Types",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Handle Message Types", "type": "main", "index": 0 }]]
     },
     "AI Sales Agent": {
-      "main": [
-        [
-          {
-            "node": "Reply To User",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Reply To User", "type": "main", "index": 0 }]]
     },
     "Handle Message Types": {
       "main": [
-        [
-          {
-            "node": "Intent Detection Node",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Reply To User1",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        [{ "node": "Parse Interactive Response", "type": "main", "index": 0 }],
+        [{ "node": "Reply To User1", "type": "main", "index": 0 }]
       ]
+    },
+    "Parse Interactive Response": {
+      "main": [[{ "node": "Intent Detection Node", "type": "main", "index": 0 }]]
     },
     "Services Catalogue": {
-      "ai_vectorStore": [
-        [
-          {
-            "node": "Services Info Tool",
-            "type": "ai_vectorStore",
-            "index": 0
-          }
-        ]
-      ]
+      "ai_vectorStore": [[{ "node": "Services Info Tool", "type": "ai_vectorStore", "index": 0 }]]
     },
     "Services Info Tool": {
-      "ai_tool": [
-        [
-          {
-            "node": "AI Sales Agent",
-            "type": "ai_tool",
-            "index": 0
-          }
-        ]
-      ]
+      "ai_tool": [[{ "node": "AI Sales Agent", "type": "ai_tool", "index": 0 }]]
     },
     "Conversation Memory": {
-      "ai_memory": [
-        [
-          {
-            "node": "AI Sales Agent",
-            "type": "ai_memory",
-            "index": 0
-          }
-        ]
-      ]
+      "ai_memory": [[{ "node": "AI Sales Agent", "type": "ai_memory", "index": 0 }]]
     },
     "OpenAI Chat Model": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "AI Sales Agent",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
+      "ai_languageModel": [[{ "node": "AI Sales Agent", "type": "ai_languageModel", "index": 0 }]]
     },
     "Embeddings OpenAI": {
-      "ai_embedding": [
-        [
-          {
-            "node": "Services Catalogue",
-            "type": "ai_embedding",
-            "index": 0
-          }
-        ]
-      ]
+      "ai_embedding": [[{ "node": "Services Catalogue", "type": "ai_embedding", "index": 0 }]]
     },
     "OpenAI Chat Model1": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "Services Info Tool",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
+      "ai_languageModel": [[{ "node": "Services Info Tool", "type": "ai_languageModel", "index": 0 }]]
     },
     "Intent Detection Node": {
-      "main": [
-        [
-          {
-            "node": "Parse Intent Response",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Parse Intent Response", "type": "main", "index": 0 }]]
     },
     "Intent LLM Model": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "Intent Detection Node",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
+      "ai_languageModel": [[{ "node": "Intent Detection Node", "type": "ai_languageModel", "index": 0 }]]
     },
     "Parse Intent Response": {
-      "main": [
-        [
-          {
-            "node": "Route by Intent",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Route by Intent", "type": "main", "index": 0 }]]
     },
     "Route by Intent": {
       "main": [
-        [
-          {
-            "node": "AI Sales Agent",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Extract Booking Details",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Extract Booking Details",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Reset State on Cancel",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Reset State on Status Check",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        [{ "node": "AI Sales Agent", "type": "main", "index": 0 }],
+        [{ "node": "Extract Booking Details", "type": "main", "index": 0 }],
+        [{ "node": "Extract Booking Details", "type": "main", "index": 0 }],
+        [{ "node": "Reset State on Cancel", "type": "main", "index": 0 }],
+        [{ "node": "Reset State on Status Check", "type": "main", "index": 0 }]
       ]
     },
     "Extract Booking Details": {
-      "main": [
-        [
-          {
-            "node": "Merge State Node",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Fetch Session from Backend", "type": "main", "index": 0 }]]
     },
     "Extract LLM Model": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "Extract Booking Details",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
+      "ai_languageModel": [[{ "node": "Extract Booking Details", "type": "ai_languageModel", "index": 0 }]]
+    },
+    "Fetch Session from Backend": {
+      "main": [[{ "node": "Merge State Node", "type": "main", "index": 0 }]]
     },
     "Merge State Node": {
-      "main": [
-        [
-          {
-            "node": "Collect User Details Node",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[
+        { "node": "Save Session to Backend", "type": "main", "index": 0 },
+        { "node": "Collect User Details Node", "type": "main", "index": 0 }
+      ]]
+    },
+    "Save Session to Backend": {
+      "main": [[]]
     },
     "Collect User Details Node": {
-      "main": [
-        [
-          {
-            "node": "Is Questionnaire Complete?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Is Questionnaire Complete?", "type": "main", "index": 0 }]]
     },
     "Is Questionnaire Complete?": {
       "main": [
-        [
-          {
-            "node": "API Sync Client Profile",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Reply Next Question",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        [{ "node": "API Sync Client Profile", "type": "main", "index": 0 }],
+        [{ "node": "Route Missing Field", "type": "main", "index": 0 }]
       ]
+    },
+    "Route Missing Field": {
+      "main": [
+        [{ "node": "Send Service Selection List", "type": "main", "index": 0 }],
+        [{ "node": "Get Available Time Slots", "type": "main", "index": 0 }],
+        [{ "node": "Reply Next Question", "type": "main", "index": 0 }]
+      ]
+    },
+    "Get Available Time Slots": {
+      "main": [[{ "node": "Build Time Slot List", "type": "main", "index": 0 }]]
+    },
+    "Build Time Slot List": {
+      "main": [[{ "node": "Send Time Slot Selection", "type": "main", "index": 0 }]]
     },
     "API Sync Client Profile": {
-      "main": [
-        [
-          {
-            "node": "API Register Booking",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "API Register Booking", "type": "main", "index": 0 }]]
     },
     "API Register Booking": {
-      "main": [
-        [
-          {
-            "node": "Check API Outcome",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Check API Outcome", "type": "main", "index": 0 }]]
     },
     "Check API Outcome": {
       "main": [
-        [
-          {
-            "node": "Reset Booking State",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Format Time Suggestions",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        [{ "node": "Reset Booking State", "type": "main", "index": 0 }],
+        [{ "node": "Format Time Suggestions", "type": "main", "index": 0 }]
       ]
     },
     "Reset Booking State": {
-      "main": [
-        [
-          {
-            "node": "Reply Confirm Booking",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Reply Confirm Booking", "type": "main", "index": 0 }]]
     },
     "Format Time Suggestions": {
-      "main": [
-        [
-          {
-            "node": "Reply Suggestions",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Reply Suggestions", "type": "main", "index": 0 }]]
     },
     "Reset State on Cancel": {
-      "main": [
-        [
-          {
-            "node": "API Check Upcoming Bookings",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[
+        { "node": "Delete Session Cancel", "type": "main", "index": 0 },
+        { "node": "API Check Upcoming Bookings", "type": "main", "index": 0 }
+      ]]
+    },
+    "Delete Session Cancel": {
+      "main": [[]]
     },
     "Reset State on Status Check": {
-      "main": [
-        [
-          {
-            "node": "API Check Upcoming Bookings",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[
+        { "node": "Delete Session Status", "type": "main", "index": 0 },
+        { "node": "API Check Upcoming Bookings", "type": "main", "index": 0 }
+      ]]
+    },
+    "Delete Session Status": {
+      "main": [[]]
     },
     "API Check Upcoming Bookings": {
-      "main": [
-        [
-          {
-            "node": "Identify Target Booking",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Identify Target Booking", "type": "main", "index": 0 }]]
     },
     "Identify Target Booking": {
-      "main": [
-        [
-          {
-            "node": "Found Booking?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Found Booking?", "type": "main", "index": 0 }]]
     },
     "Found Booking?": {
       "main": [
-        [
-          {
-            "node": "Is Cancel vs Status Check?",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Reply Cancel Missing",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        [{ "node": "Is Cancel vs Status Check?", "type": "main", "index": 0 }],
+        [{ "node": "Reply Cancel Missing", "type": "main", "index": 0 }]
       ]
     },
     "Is Cancel vs Status Check?": {
       "main": [
-        [
-          {
-            "node": "API Trigger Cancel",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Reply Status Info",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        [{ "node": "API Trigger Cancel", "type": "main", "index": 0 }],
+        [{ "node": "Reply Status Info", "type": "main", "index": 0 }]
       ]
     },
     "API Trigger Cancel": {
-      "main": [
-        [
-          {
-            "node": "Reply Cancel Confirm",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Reply Cancel Confirm", "type": "main", "index": 0 }]]
     }
   },
   "pinData": {},

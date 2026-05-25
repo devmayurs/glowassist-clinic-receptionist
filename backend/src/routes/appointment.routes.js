@@ -127,6 +127,9 @@ router.post(
   appointmentController.createAppointment
 );
 
+// GET /api/appointments/available-slots - Get available time slots for a date
+router.get('/available-slots', appointmentController.getAvailableSlots);
+
 // GET /api/appointments - Get all appointments with date range filters
 router.get('/', appointmentController.getAppointments);
 

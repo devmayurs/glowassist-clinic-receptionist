@@ -8,6 +8,7 @@ const clientRoutes = require('./routes/client.routes');
 const appointmentRoutes = require('./routes/appointment.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
 const conversationRoutes = require('./routes/conversation.routes');
+const bookingSessionRoutes = require('./routes/booking-session.routes');
 
 const app = express();
 
@@ -79,6 +80,7 @@ app.use('/api/clients', clientRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/conversations', conversationRoutes);
+app.use('/api/booking-sessions', bookingSessionRoutes);
 
 // 7. Fallback for undefined routes (404 Handler)
 app.use((req, res, next) => {

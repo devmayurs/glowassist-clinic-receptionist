@@ -190,3 +190,26 @@ ALTER TABLE clients ADD CONSTRAINT clients_booking_source_check CHECK (booking_s
 
 ALTER TABLE appointments DROP CONSTRAINT IF EXISTS appointments_booking_source_check;
 ALTER TABLE appointments ADD CONSTRAINT appointments_booking_source_check CHECK (booking_source IN ('whatsapp_ai', 'manual_crm', 'live_chat', 'instagram'));
+
+-- =========================================================================
+-- 7. BOOKING SESSIONS (n8n WhatsApp multi-turn state persistence)
+-- =========================================================================
+
+-- Stores partial booking data across multiple WhatsApp messages.
+-- Replaces n8n's getWorkflowStaticData which is unavailable in the task runner.
+CREATE TABLE IF NOT EXISTS booking_sessions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  phone_number TEXT UNIQUE NOT NULL,
+  full_name TEXT,
+  service_name TEXT,
+  preferred_date TEXT,
+  preferred_time TEXT,
+  payment_method TEXT DEFAULT 'cash',
+  payment_status TEXT DEFAULT 'pending',
+  notes TEXT,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_booking_sessions_phone ON booking_sessions(phone_number);
+
+ALTER TABLE booking_sessions ENABLE ROW LEVEL SECURITY;
