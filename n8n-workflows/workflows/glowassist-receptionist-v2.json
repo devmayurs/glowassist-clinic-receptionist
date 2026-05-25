@@ -150,8 +150,8 @@
       "name": "Parse Interactive Response",
       "type": "n8n-nodes-base.code",
       "position": [
-        -200,
-        -50
+        -440,
+        -20
       ],
       "typeVersion": 2,
       "notes": "Normalizes both text and interactive (list_reply / button_reply) messages into a unified textBody."
@@ -348,8 +348,8 @@
       "name": "Intent Detection Node",
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
       "position": [
-        900,
-        100
+        -350,
+        50
       ],
       "typeVersion": 1.5,
       "notes": "Classifies customer intent using Llama 3.3 70B."
@@ -507,8 +507,8 @@
       "name": "Extract Booking Details",
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
       "position": [
-        900,
-        -200
+        250,
+        150
       ],
       "typeVersion": 1.5,
       "notes": "Extracts booking variables from the customer's WhatsApp text using Llama 3.3 70B."
@@ -566,22 +566,22 @@
       "name": "Fetch Session from Backend",
       "type": "n8n-nodes-base.httpRequest",
       "position": [
-        400,
-        -50
+        450,
+        150
       ],
       "typeVersion": 4.1,
       "notes": "Fetches existing booking session from Supabase via backend API. Returns null if no active session."
     },
     {
       "parameters": {
-        "jsCode": "const phone = $node['WhatsApp Trigger1'].json.messages[0].from;\nconst responseText = $node['Extract Booking Details'].json.text || '{}';\nconst cleaned = responseText.replace(/```json?/gi, '').replace(/```/g, '').trim();\nlet rawExtract = {};\ntry { rawExtract = JSON.parse(cleaned); } catch (e) { rawExtract = {}; }\n\n// Parse WhatsApp Interactive Selections\nconst parsed = $node['Parse Interactive Response'].json._parsed || {};\nif (parsed.isInteractive && parsed.interactiveId) {\n  const id = parsed.interactiveId;\n  const serviceMap = {\n    'svc_gel_manicure': 'Gel Manicure Deluxe',\n    'svc_luxury_pedicure': 'Luxury Pedicure',\n    'svc_gel_extensions': 'Full Gel Nail Extensions',\n    'svc_botox': 'Botox Aesthetic Session',\n    'svc_lip_filler': 'Lip Dermal Filler Session'\n  };\n  if (serviceMap[id]) {\n    rawExtract.serviceName = serviceMap[id];\n  }\n  if (id.startsWith('slot_')) {\n    const timeParts = id.replace('slot_', '').split('_');\n    if (timeParts.length === 2) {\n      rawExtract.preferredTime = `${timeParts[0]}:${timeParts[1]}`;\n    }\n  }\n  if (id === 'pay_cash') {\n    rawExtract.paymentMethod = 'cash';\n  }\n  if (id === 'pay_card') {\n    rawExtract.paymentMethod = 'card';\n  }\n}\n\n// Read existing session from the Merge Session Info node (which was passed down)\nconst fetchResponse = $input.first().json.sessionData;\nconst existingSession = (fetchResponse && fetchResponse.data) ? fetchResponse.data : null;\n\nconst session = {\n  fullName: null,\n  phoneNumber: phone,\n  serviceName: null,\n  preferredDate: null,\n  preferredTime: null,\n  paymentMethod: null, // default null to trigger the radio buttons\n  paymentStatus: 'pending',\n  notes: null\n};\n\nif (existingSession) {\n  if (existingSession.full_name) session.fullName = existingSession.full_name;\n  if (existingSession.service_name) session.serviceName = existingSession.service_name;\n  if (existingSession.preferred_date) session.preferredDate = existingSession.preferred_date;\n  if (existingSession.preferred_time) session.preferredTime = existingSession.preferred_time;\n  if (existingSession.payment_method) session.paymentMethod = existingSession.payment_method;\n  if (existingSession.payment_status) session.paymentStatus = existingSession.payment_status;\n  if (existingSession.notes) session.notes = existingSession.notes;\n}\n\nif (rawExtract.fullName) session.fullName = rawExtract.fullName;\nif (rawExtract.serviceName) session.serviceName = rawExtract.serviceName;\nif (rawExtract.preferredDate) session.preferredDate = rawExtract.preferredDate;\nif (rawExtract.preferredTime) session.preferredTime = rawExtract.preferredTime;\nif (rawExtract.paymentMethod) session.paymentMethod = rawExtract.paymentMethod;\nif (rawExtract.paymentStatus) session.paymentStatus = rawExtract.paymentStatus;\nif (rawExtract.notes) session.notes = rawExtract.notes;\n\nreturn [{ json: { session, phone } }];"
+        "jsCode": "const phone = $node['WhatsApp Trigger1'].json.messages[0].from;\nconst responseText = $node['Extract Booking Details'].json.text || '{}';\n// Strip markdown fences if model adds them\nconst cleaned = responseText.replace(/```json?/gi, '').replace(/```/g, '').trim();\nlet rawExtract = {};\ntry { rawExtract = JSON.parse(cleaned); } catch (e) { rawExtract = {}; }\n\n// Check if this was an interactive response and override extracted fields\nconst parsed = $node['Parse Interactive Response'].json._parsed || {};\nif (parsed.isInteractive && parsed.interactiveId) {\n  const id = parsed.interactiveId;\n  const serviceMap = {\n    'svc_gel_manicure': 'Gel Manicure Deluxe',\n    'svc_luxury_pedicure': 'Luxury Pedicure',\n    'svc_gel_extensions': 'Full Gel Nail Extensions',\n    'svc_botox': 'Botox Aesthetic Session',\n    'svc_lip_filler': 'Lip Dermal Filler Session'\n  };\n  if (serviceMap[id]) {\n    rawExtract.serviceName = serviceMap[id];\n  }\n  if (id.startsWith('slot_')) {\n    const timeParts = id.replace('slot_', '').split('_');\n    if (timeParts.length === 2) {\n      rawExtract.preferredTime = `${timeParts[0]}:${timeParts[1]}`;\n    }\n  }\n}\n\n// Read existing session from the Fetch Session HTTP response\nconst fetchResponse = $input.first().json;\nconst existingSession = (fetchResponse && fetchResponse.data) ? fetchResponse.data : null;\n\n// Build session: start with defaults, layer existing DB session, then newly extracted data\nconst session = {\n  fullName: null,\n  phoneNumber: phone,\n  serviceName: null,\n  preferredDate: null,\n  preferredTime: null,\n  paymentMethod: 'cash',\n  paymentStatus: 'pending',\n  notes: null\n};\n\n// Merge existing session from Supabase\nif (existingSession) {\n  if (existingSession.full_name) session.fullName = existingSession.full_name;\n  if (existingSession.service_name) session.serviceName = existingSession.service_name;\n  if (existingSession.preferred_date) session.preferredDate = existingSession.preferred_date;\n  if (existingSession.preferred_time) session.preferredTime = existingSession.preferred_time;\n  if (existingSession.payment_method) session.paymentMethod = existingSession.payment_method;\n  if (existingSession.payment_status) session.paymentStatus = existingSession.payment_status;\n  if (existingSession.notes) session.notes = existingSession.notes;\n}\n\n// Merge newly extracted variables (overrides existing if not null)\nif (rawExtract.fullName) session.fullName = rawExtract.fullName;\nif (rawExtract.serviceName) session.serviceName = rawExtract.serviceName;\nif (rawExtract.preferredDate) session.preferredDate = rawExtract.preferredDate;\nif (rawExtract.preferredTime) session.preferredTime = rawExtract.preferredTime;\nif (rawExtract.paymentMethod) session.paymentMethod = rawExtract.paymentMethod;\nif (rawExtract.paymentStatus) session.paymentStatus = rawExtract.paymentStatus;\nif (rawExtract.notes) session.notes = rawExtract.notes;\n\nreturn [{ json: { session, phone } }];"
       },
       "id": "node-merge-state",
       "name": "Merge State Node",
       "type": "n8n-nodes-base.code",
       "position": [
-        1150,
-        -200
+        650,
+        150
       ],
       "typeVersion": 2,
       "notes": "Pure data transform — merges existing session from Supabase with newly extracted data. No getWorkflowStaticData."
@@ -626,7 +626,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const { session, phone } = $input.first().json;\n\nlet missingField = null;\nlet promptMessage = '';\n\nif (!session.serviceName) {\n  missingField = 'serviceName';\n  promptMessage = 'Please select a treatment from the list below to start your booking at Lumière Med Spa! 🌸';\n} else if (!session.preferredDate) {\n  missingField = 'preferredDate';\n  promptMessage = `Got it! A *${session.serviceName}*. 📅\\n\\nPlease type your preferred date using the format *YYYY-MM-DD* (e.g. *2026-05-28*):`;\n} else if (!session.preferredTime) {\n  missingField = 'preferredTime';\n  promptMessage = `Checking available time slots for ${session.serviceName} on ${session.preferredDate}...`;\n} else if (!session.paymentMethod) {\n  missingField = 'paymentMethod';\n  promptMessage = 'How would you prefer to pay for your treatment? 💳';\n} else if (!session.fullName) {\n  missingField = 'fullName';\n  promptMessage = `Almost done! 🌸\\n\\nCould you please reply with your *Full Name* to complete the registration?`;\n}\n\nconst isComplete = !missingField;\n\nreturn [{ json: { isComplete, missingField, promptMessage, session, phone } }];"
+        "jsCode": "const { session, phone } = $input.first().json;\n\nlet missingField = null;\nlet promptMessage = '';\n\nif (!session.serviceName) {\n  missingField = 'serviceName';\n  promptMessage = 'Please select a treatment from the list below to start your booking at Lumière Med Spa! 🌸';\n} else if (!session.preferredDate) {\n  missingField = 'preferredDate';\n  promptMessage = `Got it! A *${session.serviceName}*. 📅\\n\\nPlease type your preferred date using the format *YYYY-MM-DD* (e.g. *2026-05-28*):`;\n} else if (!session.preferredTime) {\n  missingField = 'preferredTime';\n  promptMessage = `Checking available time slots for ${session.serviceName} on ${session.preferredDate}...`;\n} else if (!session.fullName) {\n  missingField = 'fullName';\n  promptMessage = `Almost done! 🌸\\n\\nCould you please reply with your *Full Name* to complete the registration?`;\n}\n\nconst isComplete = !missingField;\n\nreturn [{ json: { isComplete, missingField, promptMessage, session, phone } }];"
       },
       "id": "node-questionnaire-state",
       "name": "Collect User Details Node",
@@ -704,23 +704,6 @@
                     "leftValue": "={{ $json.missingField }}",
                     "operator": {
                       "type": "string",
-                      "operation": "equals"
-                    },
-                    "rightValue": "paymentMethod"
-                  }
-                ]
-              },
-              "renameOutput": true,
-              "outputKey": "Payment Selection"
-            },
-            {
-              "conditions": {
-                "combinator": "and",
-                "conditions": [
-                  {
-                    "leftValue": "={{ $json.missingField }}",
-                    "operator": {
-                      "type": "string",
                       "operation": "notEquals"
                     },
                     "rightValue": "serviceName"
@@ -732,14 +715,6 @@
                       "operation": "notEquals"
                     },
                     "rightValue": "preferredTime"
-                  },
-                  {
-                    "leftValue": "={{ $json.missingField }}",
-                    "operator": {
-                      "type": "string",
-                      "operation": "notEquals"
-                    },
-                    "rightValue": "paymentMethod"
                   }
                 ]
               },
@@ -1452,152 +1427,19 @@
       ],
       "typeVersion": 2,
       "notes": "Ignores WhatsApp status/read webhooks and only allows actual customer messages to pass."
-    },
-    {
-      "parameters": {
-        "rules": {
-          "values": [
-            {
-              "conditions": {
-                "options": {
-                  "caseSensitive": true,
-                  "leftValue": "",
-                  "typeValidation": "strict",
-                  "version": 2
-                },
-                "combinator": "and",
-                "conditions": [
-                  {
-                    "operator": {
-                      "type": "string",
-                      "operation": "notIsEmpty"
-                    },
-                    "leftValue": "={{ $json.sessionData.data }}"
-                  },
-                  {
-                    "operator": {
-                      "type": "string",
-                      "operation": "notContains"
-                    },
-                    "leftValue": "={{ $json._parsed.textBody.toLowerCase() }}",
-                    "rightValue": "cancel"
-                  },
-                  {
-                    "operator": {
-                      "type": "string",
-                      "operation": "notContains"
-                    },
-                    "leftValue": "={{ $json._parsed.textBody.toLowerCase() }}",
-                    "rightValue": "status"
-                  }
-                ]
-              },
-              "renameOutput": true,
-              "outputKey": "Active Booking Flow"
-            },
-            {
-              "conditions": {
-                "options": {
-                  "caseSensitive": true,
-                  "leftValue": "",
-                  "typeValidation": "strict",
-                  "version": 2
-                },
-                "combinator": "or",
-                "conditions": [
-                  {
-                    "operator": {
-                      "type": "string",
-                      "operation": "isEmpty"
-                    },
-                    "leftValue": "={{ $json.sessionData.data }}"
-                  },
-                  {
-                    "operator": {
-                      "type": "string",
-                      "operation": "contains"
-                    },
-                    "leftValue": "={{ $json._parsed.textBody.toLowerCase() }}",
-                    "rightValue": "cancel"
-                  },
-                  {
-                    "operator": {
-                      "type": "string",
-                      "operation": "contains"
-                    },
-                    "leftValue": "={{ $json._parsed.textBody.toLowerCase() }}",
-                    "rightValue": "status"
-                  }
-                ]
-              },
-              "renameOutput": true,
-              "outputKey": "New User or Command"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "node-route-session-flow",
-      "name": "Route Session Flow",
-      "type": "n8n-nodes-base.switch",
-      "position": [
-        680,
-        -50
-      ],
-      "typeVersion": 3.2,
-      "notes": "Determines if the customer is currently in an active booking session (and bypasses LLM classification) or if it's a new request."
-    },
-    {
-      "parameters": {
-        "url": "https://graph.facebook.com/v21.0/1093698253829228/messages",
-        "method": "POST",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "whatsAppApi",
-        "sendHeaders": true,
-        "headers": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"recipient_type\": \"individual\",\n  \"to\": \"{{ $json.phone }}\",\n  \"type\": \"interactive\",\n  \"interactive\": {\n    \"type\": \"button\",\n    \"header\": {\n      \"type\": \"text\",\n      \"text\": \"💳 Payment Preference\"\n    },\n    \"body\": {\n      \"text\": \"How would you prefer to pay for your treatment at Lumière Med Spa? 🌸\"\n    },\n    \"footer\": {\n      \"text\": \"Cash and Card both accepted\"\n    },\n    \"action\": {\n      \"buttons\": [\n        {\n          \"type\": \"reply\",\n          \"reply\": {\n            \"id\": \"pay_cash\",\n            \"title\": \"Cash\"\n          }\n        },\n        {\n          \"type\": \"reply\",\n          \"reply\": {\n            \"id\": \"pay_card\",\n            \"title\": \"Card / Online\"\n          }\n        }\n      ]\n    }\n  }\n}"
-      },
-      "id": "node-send-payment-selection",
-      "name": "Send Payment Selection List",
-      "type": "n8n-nodes-base.httpRequest",
-      "position": [
-        1550,
-        150
-      ],
-      "typeVersion": 4.1,
-      "credentials": {
-        "whatsAppApi": {
-          "id": "m3O3H7hZRxW8O5Xm",
-          "name": "WhatsApp account Milind"
-        }
-      },
-      "notes": "Sends WhatsApp Interactive Buttons for Cash vs Card payment selection."
-    },
-    {
-      "parameters": {
-        "jsCode": "const sessionData = $input.first().json;\nconst parsedMessage = $node['Parse Interactive Response'].json;\n\nreturn [{\n  json: {\n    ...parsedMessage,\n    sessionData: sessionData\n  }\n}];"
-      },
-      "id": "node-merge-session-info",
-      "name": "Merge Session Info",
-      "type": "n8n-nodes-base.code",
-      "position": [
-        500,
-        -50
-      ],
-      "typeVersion": 2,
-      "notes": "Combines the original parsed customer message with the fetched database session info before routing."
     }
   ],
   "connections": {
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        []
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        []
+      ]
+    },
     "WhatsApp Trigger1": {
       "main": [
         [
@@ -1609,11 +1451,29 @@
         ]
       ]
     },
-    "Filter Webhook Types": {
+    "AI Sales Agent": {
+      "main": [
+        [
+          {
+            "node": "Reply To User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle Message Types": {
       "main": [
         [
           {
             "node": "Parse Interactive Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reply To User1",
             "type": "main",
             "index": 0
           }
@@ -1624,37 +1484,74 @@
       "main": [
         [
           {
-            "node": "Fetch Session from Backend",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Fetch Session from Backend": {
-      "main": [
-        [
-          {
-            "node": "Merge Session Info",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Route Session Flow": {
-      "main": [
-        [
-          {
-            "node": "Extract Booking Details",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
             "node": "Intent Detection Node",
             "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Services Catalogue": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Services Info Tool",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Services Info Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Sales Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conversation Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Sales Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Sales Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Services Catalogue",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Services Info Tool",
+            "type": "ai_languageModel",
             "index": 0
           }
         ]
@@ -1732,88 +1629,11 @@
         ]
       ]
     },
-    "AI Sales Agent": {
-      "main": [
-        [
-          {
-            "node": "Reply To User",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Services Catalogue": {
-      "ai_vectorStore": [
-        [
-          {
-            "node": "Services Info Tool",
-            "type": "ai_vectorStore",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Services Info Tool": {
-      "ai_tool": [
-        [
-          {
-            "node": "AI Sales Agent",
-            "type": "ai_tool",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Conversation Memory": {
-      "ai_memory": [
-        [
-          {
-            "node": "AI Sales Agent",
-            "type": "ai_memory",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "OpenAI Chat Model": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "AI Sales Agent",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Embeddings OpenAI": {
-      "ai_embedding": [
-        [
-          {
-            "node": "Services Catalogue",
-            "type": "ai_embedding",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "OpenAI Chat Model1": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "Services Info Tool",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Extract Booking Details": {
       "main": [
         [
           {
-            "node": "Merge State Node",
+            "node": "Fetch Session from Backend",
             "type": "main",
             "index": 0
           }
@@ -1831,6 +1651,17 @@
         ]
       ]
     },
+    "Fetch Session from Backend": {
+      "main": [
+        [
+          {
+            "node": "Merge State Node",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Merge State Node": {
       "main": [
         [
@@ -1838,9 +1669,7 @@
             "node": "Save Session to Backend",
             "type": "main",
             "index": 0
-          }
-        ],
-        [
+          },
           {
             "node": "Collect User Details Node",
             "type": "main",
@@ -1895,13 +1724,6 @@
         [
           {
             "node": "Get Available Time Slots",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Send Payment Selection List",
             "type": "main",
             "index": 0
           }
@@ -2006,15 +1828,18 @@
             "node": "Delete Session Cancel",
             "type": "main",
             "index": 0
-          }
-        ],
-        [
+          },
           {
             "node": "API Check Upcoming Bookings",
             "type": "main",
             "index": 0
           }
         ]
+      ]
+    },
+    "Delete Session Cancel": {
+      "main": [
+        []
       ]
     },
     "Reset State on Status Check": {
@@ -2024,15 +1849,18 @@
             "node": "Delete Session Status",
             "type": "main",
             "index": 0
-          }
-        ],
-        [
+          },
           {
             "node": "API Check Upcoming Bookings",
             "type": "main",
             "index": 0
           }
         ]
+      ]
+    },
+    "Delete Session Status": {
+      "main": [
+        []
       ]
     },
     "API Check Upcoming Bookings": {
@@ -2104,11 +1932,11 @@
         ]
       ]
     },
-    "Merge Session Info": {
+    "Filter Webhook Types": {
       "main": [
         [
           {
-            "node": "Route Session Flow",
+            "node": "Handle Message Types",
             "type": "main",
             "index": 0
           }
