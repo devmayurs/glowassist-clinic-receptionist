@@ -661,7 +661,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const phone = $node['Reset State on Cancel'] ? $node['Reset State on Cancel'].json.phone : $node['Reset State on Status Check'].json.phone;\nconst intent = $node['Reset State on Cancel'] ? $node['Reset State on Cancel'].json.intent : $node['Reset State on Status Check'].json.intent;\n\nconst appointments = $input.first().json.data || [];\nconst targetApp = appointments.find(app => app.phone_number === phone);\n\nreturn [{\n  json: {\n    phone,\n    intent,\n    appointmentFound: !!targetApp,\n    appointmentId: targetApp ? targetApp.id : null,\n    serviceName: targetApp ? targetApp.service_name : '',\n    appointmentDate: targetApp ? targetApp.appointment_date : '',\n    appointmentTime: targetApp ? targetApp.appointment_time : ''\n  }\n}];"
+        "jsCode": "const phone = $node['WhatsApp Trigger1'].json.messages[0].from;\nconst intent = $node['Parse Intent Response'].json.intent;\n\nconst appointments = $input.first().json.data || [];\nconst cleanPhone = (p) => p ? p.replace(/\\D/g, '') : '';\nconst targetApp = appointments.find(app => cleanPhone(app.phone_number) === cleanPhone(phone));\n\nreturn [{\n  json: {\n    phone,\n    intent,\n    appointmentFound: !!targetApp,\n    appointmentId: targetApp ? targetApp.id : null,\n    serviceName: targetApp ? targetApp.service_name : '',\n    appointmentDate: targetApp ? targetApp.appointment_date : '',\n    appointmentTime: targetApp ? targetApp.appointment_time : ''\n  }\n}];"
       },
       "id": "node-find-booking",
       "name": "Identify Target Booking",
