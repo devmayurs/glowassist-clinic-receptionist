@@ -594,9 +594,31 @@ const getAvailableSlots = async (req, res) => {
       closeMinutes = 1140; // 19:00
     }
 
-    // Generate all 30-minute slots within working hours
+    // Define service duration map (in minutes)
+    const durationMap = {
+      'gel manicure deluxe': 45,
+      'luxury pedicure': 60,
+      'full gel nail extensions': 75,
+      'botox aesthetic session': 30,
+      'lip dermal filler session': 45,
+      'lip filler session': 45
+    };
+
+    // Determine slot interval (defaults to 30 minutes if no matching service found)
+    let interval = 30;
+    if (serviceName) {
+      const normalizedService = serviceName.toLowerCase().trim();
+      for (const [key, val] of Object.entries(durationMap)) {
+        if (normalizedService.includes(key) || key.includes(normalizedService)) {
+          interval = val;
+          break;
+        }
+      }
+    }
+
+    // Generate all slots within working hours using the dynamic interval
     const allSlots = [];
-    for (let m = openMinutes; m < closeMinutes; m += 30) {
+    for (let m = openMinutes; m + interval <= closeMinutes; m += interval) {
       const hh = String(Math.floor(m / 60)).padStart(2, '0');
       const mm = String(m % 60).padStart(2, '0');
       allSlots.push(`${hh}:${mm}`);
