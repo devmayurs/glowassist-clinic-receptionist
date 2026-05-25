@@ -283,12 +283,12 @@
     },
     {
       "parameters": {
-        "url": "={{$env.BACKEND_API_URL}}/api/booking-sessions/{{ $node['WhatsApp Trigger1'].json.messages[0].from }}",
+        "url": "=https://be.zenithflow.in/api/booking-sessions/{{ $node['WhatsApp Trigger1'].json.messages[0].from }}",
         "method": "GET",
         "sendHeaders": true,
         "headers": {
           "parameters": [
-            { "name": "Authorization", "value": "=Bearer {{$env.BACKEND_JWT_TOKEN}}" }
+            { "name": "Authorization", "value": "=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJuOG4tc2VydmljZSIsInJvbGUiOiJzZXJ2aWNlIiwiaXNzIjoiZ2xvd2Fzc2lzdC1uOG4iLCJpYXQiOjE3NzkzNzk5NDksImV4cCI6MTgxMDkxNTk0OX0.UyPyh-klA3_9_C_No9rPFYpjEc5TddpvUEEXi1R5do0" }
           ]
         },
         "options": { "response": { "response": { "neverError": true } } }
@@ -313,12 +313,12 @@
     },
     {
       "parameters": {
-        "url": "={{$env.BACKEND_API_URL}}/api/booking-sessions/{{ $json.phone }}",
+        "url": "=https://be.zenithflow.in/api/booking-sessions/{{ $json.phone }}",
         "method": "PUT",
         "sendHeaders": true,
         "headers": {
           "parameters": [
-            { "name": "Authorization", "value": "=Bearer {{$env.BACKEND_JWT_TOKEN}}" },
+            { "name": "Authorization", "value": "=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJuOG4tc2VydmljZSIsInJvbGUiOiJzZXJ2aWNlIiwiaXNzIjoiZ2xvd2Fzc2lzdC1uOG4iLCJpYXQiOjE3NzkzNzk5NDksImV4cCI6MTgxMDkxNTk0OX0.UyPyh-klA3_9_C_No9rPFYpjEc5TddpvUEEXi1R5do0" },
             { "name": "Content-Type", "value": "application/json" }
           ]
         },
@@ -399,10 +399,10 @@
     },
     {
       "parameters": {
-        "url": "={{$env.BACKEND_API_URL}}/api/appointments/available-slots",
+        "url": "=https://be.zenithflow.in/api/appointments/available-slots",
         "method": "GET",
         "sendHeaders": true,
-        "headers": { "parameters": [{ "name": "Authorization", "value": "=Bearer {{$env.BACKEND_JWT_TOKEN}}" }] },
+        "headers": { "parameters": [{ "name": "Authorization", "value": "=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJuOG4tc2VydmljZSIsInJvbGUiOiJzZXJ2aWNlIiwiaXNzIjoiZ2xvd2Fzc2lzdC1uOG4iLCJpYXQiOjE3NzkzNzk5NDksImV4cCI6MTgxMDkxNTk0OX0.UyPyh-klA3_9_C_No9rPFYpjEc5TddpvUEEXi1R5do0" }] },
         "sendQueryParameters": true,
         "queryParameters": {
           "parameters": [
@@ -472,12 +472,12 @@
     },
     {
       "parameters": {
-        "url": "={{$env.BACKEND_API_URL}}/api/clients",
+        "url": "=https://be.zenithflow.in/api/clients",
         "method": "POST",
         "sendHeaders": true,
         "headers": {
           "parameters": [
-            { "name": "Authorization", "value": "=Bearer {{$env.BACKEND_JWT_TOKEN}}" },
+            { "name": "Authorization", "value": "=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJuOG4tc2VydmljZSIsInJvbGUiOiJzZXJ2aWNlIiwiaXNzIjoiZ2xvd2Fzc2lzdC1uOG4iLCJpYXQiOjE3NzkzNzk5NDksImV4cCI6MTgxMDkxNTk0OX0.UyPyh-klA3_9_C_No9rPFYpjEc5TddpvUEEXi1R5do0" },
             { "name": "Content-Type", "value": "application/json" }
           ]
         },
@@ -494,12 +494,12 @@
     },
     {
       "parameters": {
-        "url": "={{$env.BACKEND_API_URL}}/api/appointments",
+        "url": "=https://be.zenithflow.in/api/appointments",
         "method": "POST",
         "sendHeaders": true,
         "headers": {
           "parameters": [
-            { "name": "Authorization", "value": "=Bearer {{$env.BACKEND_JWT_TOKEN}}" },
+            { "name": "Authorization", "value": "=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJuOG4tc2VydmljZSIsInJvbGUiOiJzZXJ2aWNlIiwiaXNzIjoiZ2xvd2Fzc2lzdC1uOG4iLCJpYXQiOjE3NzkzNzk5NDksImV4cCI6MTgxMDkxNTk0OX0.UyPyh-klA3_9_C_No9rPFYpjEc5TddpvUEEXi1R5do0" },
             { "name": "Content-Type", "value": "application/json" }
           ]
         },
@@ -532,10 +532,10 @@
     },
     {
       "parameters": {
-        "url": "={{$env.BACKEND_API_URL}}/api/booking-sessions/{{ $('Collect User Details Node').item.json.phone }}",
+        "url": "=https://be.zenithflow.in/api/booking-sessions/{{ $('Collect User Details Node').item.json.phone }}",
         "method": "DELETE",
         "sendHeaders": true,
-        "headers": { "parameters": [{ "name": "Authorization", "value": "=Bearer {{$env.BACKEND_JWT_TOKEN}}" }] },
+        "headers": { "parameters": [{ "name": "Authorization", "value": "=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJuOG4tc2VydmljZSIsInJvbGUiOiJzZXJ2aWNlIiwiaXNzIjoiZ2xvd2Fzc2lzdC1uOG4iLCJpYXQiOjE3NzkzNzk5NDksImV4cCI6MTgxMDkxNTk0OX0.UyPyh-klA3_9_C_No9rPFYpjEc5TddpvUEEXi1R5do0" }] },
         "options": { "response": { "response": { "neverError": true } } }
       },
       "id": "node-reset-booking-session",
@@ -604,10 +604,10 @@
     },
     {
       "parameters": {
-        "url": "={{$env.BACKEND_API_URL}}/api/booking-sessions/{{ $json.phone }}",
+        "url": "=https://be.zenithflow.in/api/booking-sessions/{{ $json.phone }}",
         "method": "DELETE",
         "sendHeaders": true,
-        "headers": { "parameters": [{ "name": "Authorization", "value": "=Bearer {{$env.BACKEND_JWT_TOKEN}}" }] },
+        "headers": { "parameters": [{ "name": "Authorization", "value": "=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJuOG4tc2VydmljZSIsInJvbGUiOiJzZXJ2aWNlIiwiaXNzIjoiZ2xvd2Fzc2lzdC1uOG4iLCJpYXQiOjE3NzkzNzk5NDksImV4cCI6MTgxMDkxNTk0OX0.UyPyh-klA3_9_C_No9rPFYpjEc5TddpvUEEXi1R5do0" }] },
         "options": { "response": { "response": { "neverError": true } } }
       },
       "id": "node-delete-session-cancel",
@@ -630,10 +630,10 @@
     },
     {
       "parameters": {
-        "url": "={{$env.BACKEND_API_URL}}/api/booking-sessions/{{ $json.phone }}",
+        "url": "=https://be.zenithflow.in/api/booking-sessions/{{ $json.phone }}",
         "method": "DELETE",
         "sendHeaders": true,
-        "headers": { "parameters": [{ "name": "Authorization", "value": "=Bearer {{$env.BACKEND_JWT_TOKEN}}" }] },
+        "headers": { "parameters": [{ "name": "Authorization", "value": "=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJuOG4tc2VydmljZSIsInJvbGUiOiJzZXJ2aWNlIiwiaXNzIjoiZ2xvd2Fzc2lzdC1uOG4iLCJpYXQiOjE3NzkzNzk5NDksImV4cCI6MTgxMDkxNTk0OX0.UyPyh-klA3_9_C_No9rPFYpjEc5TddpvUEEXi1R5do0" }] },
         "options": { "response": { "response": { "neverError": true } } }
       },
       "id": "node-delete-session-status",
@@ -645,10 +645,10 @@
     },
     {
       "parameters": {
-        "url": "={{$env.BACKEND_API_URL}}/api/appointments",
+        "url": "=https://be.zenithflow.in/api/appointments",
         "method": "GET",
         "sendHeaders": true,
-        "headers": { "parameters": [{ "name": "Authorization", "value": "=Bearer {{$env.BACKEND_JWT_TOKEN}}" }] },
+        "headers": { "parameters": [{ "name": "Authorization", "value": "=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJuOG4tc2VydmljZSIsInJvbGUiOiJzZXJ2aWNlIiwiaXNzIjoiZ2xvd2Fzc2lzdC1uOG4iLCJpYXQiOjE3NzkzNzk5NDksImV4cCI6MTgxMDkxNTk0OX0.UyPyh-klA3_9_C_No9rPFYpjEc5TddpvUEEXi1R5do0" }] },
         "sendQueryParameters": true,
         "queryParameters": { "parameters": [{ "name": "status", "value": "scheduled" }] }
       },
@@ -699,12 +699,12 @@
     },
     {
       "parameters": {
-        "url": "={{$env.BACKEND_API_URL}}/api/appointments/{{ $json.appointmentId }}/cancel",
+        "url": "=https://be.zenithflow.in/api/appointments/{{ $json.appointmentId }}/cancel",
         "method": "PUT",
         "sendHeaders": true,
         "headers": {
           "parameters": [
-            { "name": "Authorization", "value": "=Bearer {{$env.BACKEND_JWT_TOKEN}}" },
+            { "name": "Authorization", "value": "=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJuOG4tc2VydmljZSIsInJvbGUiOiJzZXJ2aWNlIiwiaXNzIjoiZ2xvd2Fzc2lzdC1uOG4iLCJpYXQiOjE3NzkzNzk5NDksImV4cCI6MTgxMDkxNTk0OX0.UyPyh-klA3_9_C_No9rPFYpjEc5TddpvUEEXi1R5do0" },
             { "name": "Content-Type", "value": "application/json" }
           ]
         },
