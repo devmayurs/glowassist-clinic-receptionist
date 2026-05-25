@@ -574,7 +574,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const phone = $node['WhatsApp Trigger1'].json.messages[0].from;\nconst responseText = $node['Extract Booking Details'].json.text || '{}';\n// Strip markdown fences if model adds them\nconst cleaned = responseText.replace(/```json?/gi, '').replace(/```/g, '').trim();\nlet rawExtract = {};\ntry { rawExtract = JSON.parse(cleaned); } catch (e) { rawExtract = {}; }\n\n// Check if this was an interactive response and override extracted fields\nconst parsed = $node['Parse Interactive Response'].json._parsed || {};\nif (parsed.isInteractive && parsed.interactiveId) {\n  const id = parsed.interactiveId;\n  const serviceMap = {\n    'svc_gel_manicure': 'Gel Manicure Deluxe',\n    'svc_luxury_pedicure': 'Luxury Pedicure',\n    'svc_gel_extensions': 'Full Gel Nail Extensions',\n    'svc_botox': 'Botox Aesthetic Session',\n    'svc_lip_filler': 'Lip Dermal Filler Session'\n  };\n  if (serviceMap[id]) {\n    rawExtract.serviceName = serviceMap[id];\n  }\n  if (id.startsWith('slot_')) {\n    const timeParts = id.replace('slot_', '').split('_');\n    if (timeParts.length === 2) {\n      rawExtract.preferredTime = `${timeParts[0]}:${timeParts[1]}`;\n    }\n  }\n}\n\n// Read existing session from the Fetch Session HTTP response\nconst fetchResponse = $input.first().json;\nconst existingSession = (fetchResponse && fetchResponse.data) ? fetchResponse.data : null;\n\n// Build session: start with defaults, layer existing DB session, then newly extracted data\nconst session = {\n  fullName: null,\n  phoneNumber: phone,\n  serviceName: null,\n  preferredDate: null,\n  preferredTime: null,\n  paymentMethod: 'cash',\n  paymentStatus: 'pending',\n  notes: null\n};\n\n// Merge existing session from Supabase\nif (existingSession) {\n  if (existingSession.full_name) session.fullName = existingSession.full_name;\n  if (existingSession.service_name) session.serviceName = existingSession.service_name;\n  if (existingSession.preferred_date) session.preferredDate = existingSession.preferred_date;\n  if (existingSession.preferred_time) session.preferredTime = existingSession.preferred_time;\n  if (existingSession.payment_method) session.paymentMethod = existingSession.payment_method;\n  if (existingSession.payment_status) session.paymentStatus = existingSession.payment_status;\n  if (existingSession.notes) session.notes = existingSession.notes;\n}\n\n// Merge newly extracted variables (overrides existing if not null)\nif (rawExtract.fullName) session.fullName = rawExtract.fullName;\nif (rawExtract.serviceName) session.serviceName = rawExtract.serviceName;\nif (rawExtract.preferredDate) session.preferredDate = rawExtract.preferredDate;\nif (rawExtract.preferredTime) session.preferredTime = rawExtract.preferredTime;\nif (rawExtract.paymentMethod) session.paymentMethod = rawExtract.paymentMethod;\nif (rawExtract.paymentStatus) session.paymentStatus = rawExtract.paymentStatus;\nif (rawExtract.notes) session.notes = rawExtract.notes;\n\nreturn [{ json: { session, phone } }];"
+        "jsCode": "const phone = $node['WhatsApp Trigger1'].json.messages[0].from;\nconst responseText = $node['Extract Booking Details'].json.text || '{}';\nconst cleaned = responseText.replace(/```json?/gi, '').replace(/```/g, '').trim();\nlet rawExtract = {};\ntry { rawExtract = JSON.parse(cleaned); } catch (e) { rawExtract = {}; }\n\n// Parse WhatsApp Interactive Selections\nconst parsed = $node['Parse Interactive Response'].json._parsed || {};\nif (parsed.isInteractive && parsed.interactiveId) {\n  const id = parsed.interactiveId;\n  const serviceMap = {\n    'svc_gel_manicure': 'Gel Manicure Deluxe',\n    'svc_luxury_pedicure': 'Luxury Pedicure',\n    'svc_gel_extensions': 'Full Gel Nail Extensions',\n    'svc_botox': 'Botox Aesthetic Session',\n    'svc_lip_filler': 'Lip Dermal Filler Session'\n  };\n  if (serviceMap[id]) {\n    rawExtract.serviceName = serviceMap[id];\n  }\n  if (id.startsWith('slot_')) {\n    const timeParts = id.replace('slot_', '').split('_');\n    if (timeParts.length === 2) {\n      rawExtract.preferredTime = `${timeParts[0]}:${timeParts[1]}`;\n    }\n  }\n  if (id.startsWith('date_')) {\n    rawExtract.preferredDate = id.replace('date_', '');\n  }\n}\n\n// Read existing session from the Fetch Session HTTP response\nconst fetchResponse = $input.first().json;\nconst existingSession = (fetchResponse && fetchResponse.data) ? fetchResponse.data : null;\n\n// Build session: start with defaults, layer existing DB session, then newly extracted data\nconst session = {\n  fullName: null,\n  phoneNumber: phone,\n  serviceName: null,\n  preferredDate: null,\n  preferredTime: null,\n  paymentMethod: 'cash',\n  paymentStatus: 'pending',\n  notes: null\n};\n\nif (existingSession) {\n  if (existingSession.full_name) session.fullName = existingSession.full_name;\n  if (existingSession.service_name) session.serviceName = existingSession.service_name;\n  if (existingSession.preferred_date) session.preferredDate = existingSession.preferred_date;\n  if (existingSession.preferred_time) session.preferredTime = existingSession.preferred_time;\n  if (existingSession.payment_method) session.paymentMethod = existingSession.payment_method;\n  if (existingSession.payment_status) session.paymentStatus = existingSession.payment_status;\n  if (existingSession.notes) session.notes = existingSession.notes;\n}\n\nif (rawExtract.fullName) session.fullName = rawExtract.fullName;\nif (rawExtract.serviceName) session.serviceName = rawExtract.serviceName;\nif (rawExtract.preferredDate) session.preferredDate = rawExtract.preferredDate;\nif (rawExtract.preferredTime) session.preferredTime = rawExtract.preferredTime;\nif (rawExtract.paymentMethod) session.paymentMethod = rawExtract.paymentMethod;\nif (rawExtract.paymentStatus) session.paymentStatus = rawExtract.paymentStatus;\nif (rawExtract.notes) session.notes = rawExtract.notes;\n\nreturn [{ json: { session, phone } }];"
       },
       "id": "node-merge-state",
       "name": "Merge State Node",
@@ -704,6 +704,23 @@
                     "leftValue": "={{ $json.missingField }}",
                     "operator": {
                       "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "preferredDate"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Date Selection"
+            },
+            {
+              "conditions": {
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.missingField }}",
+                    "operator": {
+                      "type": "string",
                       "operation": "notEquals"
                     },
                     "rightValue": "serviceName"
@@ -715,6 +732,14 @@
                       "operation": "notEquals"
                     },
                     "rightValue": "preferredTime"
+                  },
+                  {
+                    "leftValue": "={{ $json.missingField }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEquals"
+                    },
+                    "rightValue": "preferredDate"
                   }
                 ]
               },
@@ -1427,6 +1452,55 @@
       ],
       "typeVersion": 2,
       "notes": "Ignores WhatsApp status/read webhooks and only allows actual customer messages to pass."
+    },
+    {
+      "parameters": {
+        "jsCode": "const phone = $node['Collect User Details Node'].json.phone;\nconst session = $node['Collect User Details Node'].json.session;\n\nconst weekdayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];\nconst monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];\n\nconst rows = [];\nfor (let i = 0; i < 7; i++) {\n  const d = new Date();\n  d.setDate(d.getDate() + i);\n  const yyyy = d.getFullYear();\n  const mm = String(d.getMonth() + 1).padStart(2, '0');\n  const dd = String(d.getDate()).padStart(2, '0');\n  \n  let label = '';\n  if (i === 0) label = 'Today';\n  else if (i === 1) label = 'Tomorrow';\n  else label = weekdayNames[d.getDay()];\n  \n  const display = `${label} (${monthNames[d.getMonth()]} ${d.getDate()})`;\n  const rawDate = `${yyyy}-${mm}-${dd}`;\n  \n  rows.push({\n    id: `date_${rawDate}`,\n    title: display,\n    description: `Book for ${label}`\n  });\n}\n\nconst payload = {\n  messaging_product: \"whatsapp\",\n  recipient_type: \"individual\",\n  to: phone,\n  type: \"interactive\",\n  interactive: {\n    type: \"list\",\n    header: {\n      type: \"text\",\n      text: \"📅 Select a Date\"\n    },\n    body: {\n      text: `Please select your preferred date to book the ${session.serviceName} at Lumière Med Spa! 🌸`\n    },\n    footer: {\n      text: \"Showing next 7 available days\"\n    },\n    action: {\n      button: \"View Available Dates\",\n      sections: [\n        {\n          \"title\": \"📅 Booking Dates\",\n          \"rows\": rows\n        }\n      ]\n    }\n  }\n};\n\nreturn [{ json: { payload, phone } }];"
+      },
+      "id": "node-build-date-list-payload",
+      "name": "Build Date Selection List",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1450,
+        180
+      ],
+      "typeVersion": 2,
+      "notes": "Generates the next 7 calendar days to show in the WhatsApp selection list."
+    },
+    {
+      "parameters": {
+        "url": "https://graph.facebook.com/v21.0/1093698253829228/messages",
+        "method": "POST",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "whatsAppApi",
+        "sendHeaders": true,
+        "headers": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.payload) }}"
+      },
+      "id": "node-send-date-selection-list",
+      "name": "Send Date Selection List",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1650,
+        180
+      ],
+      "typeVersion": 4.1,
+      "credentials": {
+        "whatsAppApi": {
+          "id": "m3O3H7hZRxW8O5Xm",
+          "name": "WhatsApp account Milind"
+        }
+      },
+      "notes": "Sends the WhatsApp interactive list message containing the 7 days."
     }
   ],
   "connections": {
@@ -1730,6 +1804,13 @@
         ],
         [
           {
+            "node": "Build Date Selection List",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
             "node": "Reply Next Question",
             "type": "main",
             "index": 0
@@ -1937,6 +2018,17 @@
         [
           {
             "node": "Handle Message Types",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Date Selection List": {
+      "main": [
+        [
+          {
+            "node": "Send Date Selection List",
             "type": "main",
             "index": 0
           }
